@@ -1,10 +1,14 @@
 ## 구성
 웹서버 nginx
+
 WSGI gunicorn
+
 웹 프레임워크 Flask
+
 
 ## 진행 사항
 gunicorn nginx 연결 완료
+
 
 ## 알아둬야 할 점
 
@@ -15,3 +19,31 @@ gunicorn nginx 연결 완료
 혹시 응답하는 부분에서 오류 발생하면 연락 바람
 
 크롬에서 접속시 80포트로 접속하도록 설정됨
+
+systemctl start pmarket은 gunicorn과 app.py를 같이 실행해줌
+
+
+gunicorn pmarket서비스 세팅 파일 경로
+
+/etc/systemd/system/pmarket.service
+
+
+nginx 서버 설정 파일 경로
+
+/etc/nginx/sites-available/pmarket
+
+
+## 서버 실행 방법
+
+```bash
+sudo systemctl start pmarket
+
+sudo systemctl start nginx
+```
+
+
+
+
+
+
+
