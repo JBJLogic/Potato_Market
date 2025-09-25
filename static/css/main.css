@@ -1,0 +1,499 @@
+/* 기본 스타일 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background-color: #f8f9fa;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* 헤더 */
+.header {
+    background: #fff;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+}
+
+.header .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 20px;
+}
+
+.logo h1 {
+    color: #007bff;
+    font-size: 1.8rem;
+    font-weight: bold;
+}
+
+.logo i {
+    margin-right: 0.5rem;
+}
+
+.nav ul {
+    display: flex;
+    list-style: none;
+    gap: 2rem;
+}
+
+.nav a {
+    text-decoration: none;
+    color: #333;
+    font-weight: 500;
+    transition: color 0.3s;
+}
+
+.nav a:hover {
+    color: #007bff;
+}
+
+.auth-buttons {
+    display: flex;
+    gap: 1rem;
+}
+
+/* 버튼 스타일 */
+.btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+    transition: all 0.3s;
+}
+
+.btn-primary {
+    background: #007bff;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #0056b3;
+    transform: translateY(-2px);
+}
+
+.btn-outline {
+    background: transparent;
+    color: #007bff;
+    border: 2px solid #007bff;
+}
+
+.btn-outline:hover {
+    background: #007bff;
+    color: white;
+}
+
+.btn-full {
+    width: 100%;
+}
+
+/* 메인 콘텐츠 */
+.main {
+    margin-top: 80px;
+}
+
+/* 히어로 섹션 */
+.hero {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 4rem 0;
+    text-align: center;
+}
+
+.hero-content h2 {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    font-weight: bold;
+}
+
+.hero-content p {
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+    opacity: 0.9;
+}
+
+.search-box {
+    display: flex;
+    max-width: 500px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 50px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.search-box input {
+    flex: 1;
+    padding: 1rem 1.5rem;
+    border: none;
+    outline: none;
+    font-size: 1rem;
+    color: #333;
+}
+
+.search-box button {
+    padding: 1rem 1.5rem;
+    background: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.search-box button:hover {
+    background: #0056b3;
+}
+
+/* 카테고리 섹션 */
+.categories {
+    padding: 4rem 0;
+    background: white;
+}
+
+.categories h3 {
+    text-align: center;
+    font-size: 2.5rem;
+    margin-bottom: 3rem;
+    color: #333;
+}
+
+.category-grid {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    flex-wrap: nowrap;
+    max-width: 100%;
+    margin: 0 auto;
+}
+
+.category-item {
+    text-align: center;
+    padding: 1.5rem 1rem;
+    background: #f8f9fa;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s;
+    border: 2px solid transparent;
+    flex: 1;
+    min-width: 120px;
+}
+
+.category-item:hover {
+    background: #007bff;
+    color: white;
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0,123,255,0.3);
+}
+
+.category-item i {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    display: block;
+}
+
+.category-item span {
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+/* 최신 상품 섹션 */
+.latest-products {
+    padding: 4rem 0;
+    background: #f8f9fa;
+}
+
+.latest-products h3 {
+    text-align: center;
+    font-size: 2.5rem;
+    margin-bottom: 3rem;
+    color: #333;
+}
+
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+}
+
+.product-card {
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    transition: transform 0.3s;
+    cursor: pointer;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+}
+
+.product-image {
+    width: 100%;
+    height: 200px;
+    background: #e9ecef;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6c757d;
+    font-size: 3rem;
+}
+
+.product-info {
+    padding: 1.5rem;
+}
+
+.product-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #333;
+}
+
+.product-price {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #007bff;
+    margin-bottom: 0.5rem;
+}
+
+.product-location {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+/* 푸터 */
+.footer {
+    background: #333;
+    color: white;
+    padding: 3rem 0 1rem;
+}
+
+.footer-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.footer-section h4 {
+    margin-bottom: 1rem;
+    color: #007bff;
+}
+
+.footer-section ul {
+    list-style: none;
+}
+
+.footer-section ul li {
+    margin-bottom: 0.5rem;
+}
+
+.footer-section a {
+    color: #ccc;
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+.footer-section a:hover {
+    color: #007bff;
+}
+
+.social-links {
+    display: flex;
+    gap: 1rem;
+}
+
+.social-links a {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    background: #007bff;
+    color: white;
+    text-align: center;
+    line-height: 40px;
+    border-radius: 50%;
+    transition: background 0.3s;
+}
+
+.social-links a:hover {
+    background: #0056b3;
+}
+
+.footer-bottom {
+    text-align: center;
+    padding-top: 2rem;
+    border-top: 1px solid #555;
+    color: #ccc;
+}
+
+/* 모달 스타일 */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    animation: fadeIn 0.3s;
+}
+
+.modal-content {
+    background-color: white;
+    margin: 5% auto;
+    padding: 2rem;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 400px;
+    position: relative;
+    animation: slideIn 0.3s;
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    position: absolute;
+    right: 1rem;
+    top: 1rem;
+}
+
+.close:hover {
+    color: #000;
+}
+
+.modal h2 {
+    margin-bottom: 1.5rem;
+    text-align: center;
+    color: #333;
+}
+
+/* 폼 스타일 */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #333;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid #e9ecef;
+    border-radius: 5px;
+    font-size: 1rem;
+    transition: border-color 0.3s;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #007bff;
+}
+
+.form-link {
+    text-align: center;
+    margin-top: 1rem;
+}
+
+.form-link a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.form-link a:hover {
+    text-decoration: underline;
+}
+
+/* 애니메이션 */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .header .container {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .nav ul {
+        gap: 1rem;
+    }
+    
+    .hero-content h2 {
+        font-size: 2rem;
+    }
+    
+    .search-box {
+        flex-direction: column;
+        border-radius: 10px;
+    }
+    
+    .search-box input {
+        border-radius: 10px 10px 0 0;
+    }
+    
+    .search-box button {
+        border-radius: 0 0 10px 10px;
+    }
+    
+    .category-grid {
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    
+    .category-item {
+        min-width: 100px;
+        padding: 1rem 0.5rem;
+    }
+    
+    .product-grid {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    }
+    
+    .modal-content {
+        margin: 10% auto;
+        width: 95%;
+    }
+}
