@@ -36,10 +36,23 @@ body {
     padding: 1rem 20px;
 }
 
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.logo-img {
+    height: 40px;
+    width: auto;
+    object-fit: contain;
+}
+
 .logo h1 {
-    color: #007bff;
+    color: #8B4513;
     font-size: 1.8rem;
     font-weight: bold;
+    margin: 0;
 }
 
 .logo i {
@@ -60,7 +73,7 @@ body {
 }
 
 .nav a:hover {
-    color: #007bff;
+    color: #8B4513;
 }
 
 .auth-buttons {
@@ -83,23 +96,23 @@ body {
 }
 
 .btn-primary {
-    background: #007bff;
+    background: #8B4513;
     color: white;
 }
 
 .btn-primary:hover {
-    background: #0056b3;
+    background: #A0522D;
     transform: translateY(-2px);
 }
 
 .btn-outline {
     background: transparent;
-    color: #007bff;
-    border: 2px solid #007bff;
+    color: #8B4513;
+    border: 2px solid #8B4513;
 }
 
 .btn-outline:hover {
-    background: #007bff;
+    background: #8B4513;
     color: white;
 }
 
@@ -153,7 +166,7 @@ body {
 
 .search-box button {
     padding: 1rem 1.5rem;
-    background: #007bff;
+    background: #8B4513;
     color: white;
     border: none;
     cursor: pointer;
@@ -161,7 +174,7 @@ body {
 }
 
 .search-box button:hover {
-    background: #0056b3;
+    background: #A0522D;
 }
 
 /* 카테고리 섹션 */
@@ -199,10 +212,10 @@ body {
 }
 
 .category-item:hover {
-    background: #007bff;
+    background: #8B4513;
     color: white;
     transform: translateY(-5px);
-    box-shadow: 0 10px 25px rgba(0,123,255,0.3);
+    box-shadow: 0 10px 25px rgba(139,69,19,0.3);
 }
 
 .category-item i {
@@ -274,7 +287,7 @@ body {
 .product-price {
     font-size: 1.5rem;
     font-weight: bold;
-    color: #007bff;
+    color: #8B4513;
     margin-bottom: 0.5rem;
 }
 
@@ -299,7 +312,7 @@ body {
 
 .footer-section h4 {
     margin-bottom: 1rem;
-    color: #007bff;
+    color: #8B4513;
 }
 
 .footer-section ul {
@@ -317,7 +330,7 @@ body {
 }
 
 .footer-section a:hover {
-    color: #007bff;
+    color: #8B4513;
 }
 
 .social-links {
@@ -329,7 +342,7 @@ body {
     display: inline-block;
     width: 40px;
     height: 40px;
-    background: #007bff;
+    background: #8B4513;
     color: white;
     text-align: center;
     line-height: 40px;
@@ -338,7 +351,7 @@ body {
 }
 
 .social-links a:hover {
-    background: #0056b3;
+    background: #A0522D;
 }
 
 .footer-bottom {
@@ -416,7 +429,7 @@ body {
 
 .form-group input:focus {
     outline: none;
-    border-color: #007bff;
+    border-color: #8B4513;
 }
 
 .form-link {
@@ -425,7 +438,7 @@ body {
 }
 
 .form-link a {
-    color: #007bff;
+    color: #8B4513;
     text-decoration: none;
 }
 
