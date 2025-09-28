@@ -1,0 +1,25 @@
+<!-- 금액 충전 모달 -->
+<div id="chargeModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('chargeModal')">&times;</span>
+        <h2>💰 금액 충전하기</h2>
+        <form id="chargeForm">
+            <!-- 에러/성공 메시지 표시 영역 -->
+            <div id="chargeError" class="error-message" style="display: none;"></div>
+            
+            <div class="form-group">
+                <label for="chargeAmount">충전할 금액</label>
+                <input type="number" id="chargeAmount" name="amount" min="1000" step="1000" placeholder="최소 1,000원" required>
+            </div>
+            <div class="charge-options">
+                <button type="button" class="charge-option" onclick="setChargeAmount(10000)">10,000원</button>
+                <button type="button" class="charge-option" onclick="setChargeAmount(50000)">50,000원</button>
+                <button type="button" class="charge-option" onclick="setChargeAmount(100000)">100,000원</button>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full" id="chargeBtn">
+                <span id="chargeBtnText">충전하기</span>
+                <span id="chargeBtnLoading" style="display: none;">처리 중...</span>
+            </button>
+        </form>
+    </div>
+</div>

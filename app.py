@@ -4,6 +4,7 @@ import mysql.connector
 from datetime import datetime
 import hashlib
 import os
+import base64
 from dotenv import load_dotenv
 
 # AWS 관리 라이브러리. boto3 라이브러리를 사용해서 aws s3에 이미지 업로드 해야 함.
@@ -41,6 +42,10 @@ def process_password(password):
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@app.route('/product/<int:product_id>')
+def product_detail(product_id):
+    return render_template('product_detail.html')
 
 # API 라우트들
 
@@ -151,7 +156,7 @@ def get_products():
         
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT PRODUCT_ID, product_name, price, description, created_at, SELLER_ID
+            SELECT PRODUCT_ID, product_name, price, description, image_url, delivery_method, created_at, SELLER_ID
             FROM PRODUCT 
             WHERE is_sold = 0
             ORDER BY created_at DESC 
@@ -164,13 +169,21 @@ def get_products():
         
         product_list = []
         for product in products:
+            # 이미지 URL 처리 (LONGBLOB 데이터를 base64로 인코딩)
+            image_url = None
+            if product[4]:  # image_url (LONGBLOB)이 있는 경우
+                image_base64 = base64.b64encode(product[4]).decode('utf-8')
+                image_url = f"data:image/jpeg;base64,{image_base64}"
+            
             product_list.append({
                 'id': product[0],
                 'title': product[1],
                 'price': product[2],
                 'description': product[3],
-                'created_at': product[4].isoformat() if product[4] else None,
-                'seller_id': product[5]
+                'image_url': image_url,
+                'delivery_method': product[5],
+                'created_at': product[6].isoformat() if product[6] else None,
+                'seller_id': product[7]
             })
         
         return jsonify({'products': product_list}), 200
@@ -178,10 +191,140 @@ def get_products():
     except Exception as e:
         return jsonify({'error': f'상품 목록 조회 중 오류가 발생했습니다: {str(e)}'}), 500
 
-# 상품 등록 API (추후 구현)
+# 상품 상세 정보 API
+@app.route('/api/products/<int:product_id>', methods=['GET'])
+def get_product_detail(product_id):
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'error': '데이터베이스 연결 오류'}), 500
+        
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT PRODUCT_ID, product_name, price, description, image_url, delivery_method, created_at, SELLER_ID
+            FROM PRODUCT 
+            WHERE PRODUCT_ID = %s AND is_sold = 0
+        """, (product_id,))
+        
+        product = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        if not product:
+            return jsonify({'error': '상품을 찾을 수 없습니다.'}), 404
+        
+        # 이미지 URL 처리 (LONGBLOB 데이터를 base64로 인코딩)
+        image_url = None
+        if product[4]:  # image_url (LONGBLOB)이 있는 경우
+            image_base64 = base64.b64encode(product[4]).decode('utf-8')
+            image_url = f"data:image/jpeg;base64,{image_base64}"
+        
+        # 판매자 정보 조회
+        conn = get_db_connection()
+        if conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT nickname FROM USER WHERE USER_ID = %s", (product[7],))
+            seller = cursor.fetchone()
+            cursor.close()
+            conn.close()
+            seller_nickname = seller[0] if seller else "알 수 없음"
+        else:
+            seller_nickname = "알 수 없음"
+        
+        product_detail = {
+            'id': product[0],
+            'title': product[1],
+            'price': product[2],
+            'description': product[3],
+            'image_url': image_url,
+            'delivery_method': product[5],
+            'created_at': product[6].isoformat() if product[6] else None,
+            'seller_id': product[7],
+            'seller_nickname': seller_nickname
+        }
+        
+        return jsonify({'product': product_detail}), 200
+        
+    except Exception as e:
+        return jsonify({'error': f'상품 상세 조회 중 오류가 발생했습니다: {str(e)}'}), 500
+
+# 상품 등록 API
 @app.route('/api/products', methods=['POST'])
 def create_product():
-    return jsonify({'message': '상품 등록 기능은 추후 구현될 예정입니다.'}), 501
+    try:
+        # 필수 필드 검증
+        if 'title' not in request.form or not request.form['title']:
+            return jsonify({'error': '상품 제목을 입력해주세요.'}), 400
+        
+        if 'price' not in request.form or not request.form['price']:
+            return jsonify({'error': '가격을 입력해주세요.'}), 400
+        
+        if 'delivery' not in request.form or not request.form['delivery']:
+            return jsonify({'error': '배송 방법을 선택해주세요.'}), 400
+        
+        if 'description' not in request.form or not request.form['description']:
+            return jsonify({'error': '상품 설명을 입력해주세요.'}), 400
+        
+        if 'image' not in request.files or not request.files['image'].filename:
+            return jsonify({'error': '상품 이미지를 선택해주세요.'}), 400
+        
+        if 'seller_id' not in request.form or not request.form['seller_id']:
+            return jsonify({'error': '로그인이 필요합니다.'}), 401
+        
+        # 데이터 추출
+        title = request.form['title']
+        price = int(request.form['price'])
+        delivery = request.form['delivery']
+        description = request.form['description']
+        seller_id = int(request.form['seller_id'])
+        image_file = request.files['image']
+        
+        # 가격 유효성 검사
+        if price < 0:
+            return jsonify({'error': '가격은 0원 이상이어야 합니다.'}), 400
+        
+        # 이미지 파일 검증
+        if not image_file.filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif')):
+            return jsonify({'error': '이미지 파일만 업로드 가능합니다.'}), 400
+        
+        # 데이터베이스 연결
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'error': '데이터베이스 연결 오류'}), 500
+        
+        cursor = conn.cursor()
+        
+        # 판매자 존재 확인
+        cursor.execute("SELECT USER_ID FROM USER WHERE USER_ID = %s", (seller_id,))
+        if not cursor.fetchone():
+            cursor.close()
+            conn.close()
+            return jsonify({'error': '사용자를 찾을 수 없습니다.'}), 404
+        
+        # 이미지 파일을 LONGBLOB으로 변환
+        image_data = image_file.read()
+        
+        # 상품 등록 (이미지를 LONGBLOB으로 저장)
+        cursor.execute("""
+            INSERT INTO PRODUCT (SELLER_ID, product_name, price, description, image_url, delivery_method, created_at, is_sold)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """, (seller_id, title, price, description, image_data, delivery, datetime.now(), 0))
+        
+        product_id = cursor.lastrowid
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({
+            'message': '상품이 성공적으로 등록되었습니다.',
+            'product_id': product_id
+        }), 201
+        
+    except ValueError:
+        return jsonify({'error': '올바른 가격을 입력해주세요.'}), 400
+    except Exception as e:
+        return jsonify({'error': f'상품 등록 중 오류가 발생했습니다: {str(e)}'}), 500
+
 
 # 마이페이지 API (추후 구현)
 @app.route('/api/user/profile', methods=['GET'])
@@ -192,6 +335,69 @@ def get_user_profile():
 @app.route('/api/board', methods=['GET'])
 def get_board_posts():
     return jsonify({'message': '게시판 기능은 추후 구현될 예정입니다.'}), 501
+
+# 금액 충전 API
+@app.route('/api/charge', methods=['POST'])
+def charge_money():
+    try:
+        data = request.get_json()
+        
+        # 필수 필드 검증
+        if not data.get('amount'):
+            return jsonify({'error': '충전할 금액을 입력해주세요.'}), 400
+        
+        amount = int(data['amount'])
+        
+        # 금액 유효성 검사
+        if amount < 1000:
+            return jsonify({'error': '최소 충전 금액은 1,000원입니다.'}), 400
+        
+        if amount > 1000000:
+            return jsonify({'error': '최대 충전 금액은 1,000,000원입니다.'}), 400
+        
+        # 사용자 ID 확인 (실제로는 세션에서 가져와야 함)
+        user_id = data.get('user_id')
+        if not user_id:
+            return jsonify({'error': '로그인이 필요합니다.'}), 401
+        
+        # 데이터베이스 연결
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'error': '데이터베이스 연결 오류'}), 500
+        
+        cursor = conn.cursor()
+        
+        # 사용자 존재 확인
+        cursor.execute("SELECT USER_ID, money FROM USER WHERE USER_ID = %s", (user_id,))
+        user = cursor.fetchone()
+        
+        if not user:
+            cursor.close()
+            conn.close()
+            return jsonify({'error': '사용자를 찾을 수 없습니다.'}), 404
+        
+        # 현재 금액에 충전 금액 추가
+        new_money = user[1] + amount
+        
+        # DB 업데이트
+        cursor.execute("""
+            UPDATE USER SET money = %s WHERE USER_ID = %s
+        """, (new_money, user_id))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({
+            'message': '충전이 완료되었습니다.',
+            'charged_amount': amount,
+            'new_balance': new_money
+        }), 200
+        
+    except ValueError:
+        return jsonify({'error': '올바른 금액을 입력해주세요.'}), 400
+    except Exception as e:
+        return jsonify({'error': f'충전 중 오류가 발생했습니다: {str(e)}'}), 500
 
 ###################################################################################
 if __name__ == '__main__':

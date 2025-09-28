@@ -1,0 +1,37 @@
+<!-- 마이페이지 모달 -->
+<div id="myPageModal" class="modal">
+    <div class="modal-content mypage-content">
+        <span class="close" onclick="closeModal('myPageModal')">&times;</span>
+        <h2>마이페이지</h2>
+        
+        <div class="user-profile">
+            <div class="profile-section">
+                <h3>👤 사용자 정보</h3>
+                <div class="info-item">
+                    <label>이메일:</label>
+                    <span id="profileEmail">-</span>
+                </div>
+                <div class="info-item">
+                    <label>닉네임:</label>
+                    <span id="profileNickname">-</span>
+                </div>
+                <div class="info-item">
+                    <label>보유 금액:</label>
+                    <span id="profileMoney" class="money-display">-</span>
+                </div>
+            </div>
+            
+            <div class="action-section">
+                <h3>⚡ 빠른 기능</h3>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="showProductRegister()">
+                        📦 상품 등록하기
+                    </button>
+                    <button class="btn btn-outline" onclick="showChargeModal()">
+                        💰 금액 충전하기
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,35 @@
+<!-- 회원가입 모달 -->
+<div id="registerModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('registerModal')">&times;</span>
+        <h2>회원가입</h2>
+        <form id="registerForm">
+            <!-- 에러 메시지 표시 영역 -->
+            <div id="registerError" class="error-message" style="display: none;"></div>
+            
+            <div class="form-group">
+                <label for="registerEmail">이메일</label>
+                <input type="email" id="registerEmail" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="registerNickname">닉네임</label>
+                <input type="text" id="registerNickname" name="nickname" required>
+            </div>
+            <div class="form-group">
+                <label for="registerPassword">비밀번호</label>
+                <input type="password" id="registerPassword" name="password" required>
+            </div>
+            <div class="form-group">
+                <label for="confirmPassword">비밀번호 확인</label>
+                <input type="password" id="confirmPassword" name="confirmPassword" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full" id="registerBtn">
+                <span id="registerBtnText">회원가입</span>
+                <span id="registerBtnLoading" style="display: none;">처리 중...</span>
+            </button>
+            <p class="form-link">
+                이미 계정이 있으신가요? <a href="#" onclick="switchToLogin()">로그인</a>
+            </p>
+        </form>
+    </div>
+</div>

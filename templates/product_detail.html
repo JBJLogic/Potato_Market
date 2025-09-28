@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- 상품 상세 페이지 -->
+<div class="product-detail-container">
+    <div class="container">
+        <!-- 뒤로가기 버튼 -->
+        <div class="back-button">
+            <button class="btn btn-outline" onclick="goBack()">
+                ← 뒤로가기
+            </button>
+        </div>
+        
+        <!-- 상품 상세 정보 -->
+        <div class="product-detail" id="productDetail">
+            <!-- 상품 정보가 여기에 동적으로 로드됩니다 -->
+        </div>
+    </div>
+</div>
+
+<!-- 구매 모달 -->
+<div id="purchaseModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('purchaseModal')">&times;</span>
+        <h2>💰 구매하기</h2>
+        <div id="purchaseInfo">
+            <!-- 구매 정보가 여기에 표시됩니다 -->
+        </div>
+        <div class="purchase-actions">
+            <button class="btn btn-outline" onclick="closeModal('purchaseModal')">취소</button>
+            <button class="btn btn-primary" onclick="confirmPurchase()">구매하기</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

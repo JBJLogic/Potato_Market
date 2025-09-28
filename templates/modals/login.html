@@ -1,0 +1,27 @@
+<!-- 로그인 모달 -->
+<div id="loginModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('loginModal')">&times;</span>
+        <h2>로그인</h2>
+        <form id="loginForm">
+            <!-- 에러 메시지 표시 영역 -->
+            <div id="loginError" class="error-message" style="display: none;"></div>
+            
+            <div class="form-group">
+                <label for="loginEmail">이메일</label>
+                <input type="email" id="loginEmail" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="loginPassword">비밀번호</label>
+                <input type="password" id="loginPassword" name="password" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full" id="loginBtn">
+                <span id="loginBtnText">로그인</span>
+                <span id="loginBtnLoading" style="display: none;">처리 중...</span>
+            </button>
+            <p class="form-link">
+                계정이 없으신가요? <a href="#" onclick="switchToRegister()">회원가입</a>
+            </p>
+        </form>
+    </div>
+</div>
