@@ -99,6 +99,7 @@ async function handleRegister(event) {
     const formData = new FormData(event.target);
     const registerData = {
         email: formData.get('email'),
+        nickname: formData.get('nickname'),
         password: formData.get('password'),
         confirmPassword: formData.get('confirmPassword')
     };
@@ -146,7 +147,8 @@ function updateUserInterface(user) {
     const authButtons = document.querySelector('.auth-buttons');
     authButtons.innerHTML = `
         <div class="user-info">
-            <span>안녕하세요, ${user.email}님!</span>
+            <span>안녕하세요, ${user.nickname}님!</span>
+            <span class="user-money">💰 ${user.money.toLocaleString()}원</span>
             <button class="btn btn-outline" onclick="showMyPage()">마이페이지</button>
             <button class="btn btn-outline" onclick="logout()">로그아웃</button>
         </div>

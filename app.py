@@ -51,7 +51,7 @@ def register():
         data = request.get_json()
         
         # 필수 필드 검증
-        required_fields = ['email', 'password']
+        required_fields = ['email', 'password', 'nickname']
         for field in required_fields:
             if field not in data or not data[field]:
                 return jsonify({'error': f'{field}은(는) 필수입니다.'}), 400
@@ -60,7 +60,7 @@ def register():
         if data['password'] != data.get('confirmPassword'):
             return jsonify({'error': '비밀번호가 일치하지 않습니다.'}), 400
         
-        # 이메일 중복 확인
+        # 이메일 및 닉네임 중복 확인
         conn = get_db_connection()
         if not conn:
             return jsonify({'error': '데이터베이스 연결 오류'}), 500
@@ -72,12 +72,18 @@ def register():
             conn.close()
             return jsonify({'error': '이미 존재하는 이메일입니다.'}), 400
         
+        cursor.execute("SELECT USER_ID FROM USER WHERE nickname = %s", (data['nickname'],))
+        if cursor.fetchone():
+            cursor.close()
+            conn.close()
+            return jsonify({'error': '이미 존재하는 닉네임입니다.'}), 400
+        
         # 사용자 등록
         processed_password = process_password(data['password'])
         cursor.execute("""
-            INSERT INTO USER (email, password, created_at)
-            VALUES (%s, %s, %s)
-        """, (data['email'], processed_password, datetime.now()))
+            INSERT INTO USER (email, nickname, password, money, created_at)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (data['email'], data['nickname'], processed_password, 0, datetime.now()))
         
         conn.commit()
         user_id = cursor.lastrowid
@@ -110,7 +116,7 @@ def login():
         processed_password = process_password(data['password'])
         
         cursor.execute("""
-            SELECT USER_ID, email, created_at FROM USER 
+            SELECT USER_ID, email, nickname, money, created_at FROM USER 
             WHERE email = %s AND password = %s
         """, (data['email'], processed_password))
         
@@ -124,7 +130,9 @@ def login():
                 'user': {
                     'id': user[0],
                     'email': user[1],
-                    'created_at': user[2].isoformat() if user[2] else None
+                    'nickname': user[2],
+                    'money': user[3],
+                    'created_at': user[4].isoformat() if user[4] else None
                 }
             }), 200
         else:
