@@ -391,8 +391,13 @@ def create_product():
         if 'image' not in request.files or not request.files['image'].filename:
             return jsonify({'error': '상품 이미지를 선택해주세요.'}), 400
         
-        if 'seller_id' not in request.form or not request.form['seller_id']:
+        # 세션에서 사용자 정보 확인
+        if not session.get('logged_in'):
             return jsonify({'error': '로그인이 필요합니다.'}), 401
+        
+        seller_id = session.get('user_id')
+        if not seller_id:
+            return jsonify({'error': '사용자 정보를 찾을 수 없습니다.'}), 401
         
         # 데이터 추출
         title = request.form['title']
@@ -400,7 +405,6 @@ def create_product():
         delivery = request.form['delivery']
         description = request.form['description']
         category = request.form['category']
-        seller_id = int(request.form['seller_id'])
         image_file = request.files['image']
         
         # 가격 유효성 검사

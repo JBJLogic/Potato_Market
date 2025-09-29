@@ -548,7 +548,8 @@ async function handleProductSubmit(event) {
     try {
         const response = await fetch('/api/products', {
             method: 'POST',
-            body: formData
+            body: formData,
+            credentials: 'include'  // 쿠키 포함하여 세션 정보 전송
         });
         
         if (response.ok) {
