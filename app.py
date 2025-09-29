@@ -48,6 +48,10 @@ def index():
 def product_detail(product_id):
     return render_template('product_detail.html')
 
+@app.route('/mypage')
+def mypage():
+    return render_template('mypage.html')
+
 # API 라우트들
 
 # 회원가입 API
@@ -200,10 +204,11 @@ def get_products():
         
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT PRODUCT_ID, product_name, price, description, image_url, delivery_method, created_at, SELLER_ID
-            FROM PRODUCT 
-            WHERE is_sold = 0
-            ORDER BY created_at DESC 
+            SELECT p.PRODUCT_ID, p.product_name, p.price, p.description, p.image_url, p.delivery_method, p.category, p.created_at, p.SELLER_ID, u.nickname
+            FROM PRODUCT p
+            JOIN USER u ON p.SELLER_ID = u.USER_ID
+            WHERE p.is_sold = 0
+            ORDER BY p.created_at DESC 
             LIMIT 20
         """)
         
@@ -221,13 +226,15 @@ def get_products():
             
             product_list.append({
                 'id': product[0],
-                'title': product[1],
-                'price': product[2],
-                'description': product[3],
+                'title': product[1] if product[1] else '상품명 없음',
+                'price': product[2] if product[2] else 0,
+                'description': product[3] if product[3] else '',
                 'image_url': image_url,
-                'delivery_method': product[5],
-                'created_at': product[6].isoformat() if product[6] else None,
-                'seller_id': product[7]
+                'delivery_method': product[5] if product[5] else '배송 정보 없음',
+                'category': product[6] if product[6] else '기타',
+                'created_at': product[7].isoformat() if product[7] else None,
+                'seller_id': product[8],
+                'seller_nickname': product[9] if product[9] else '알 수 없음'
             })
         
         return jsonify({'products': product_list}), 200
@@ -292,6 +299,75 @@ def get_product_detail(product_id):
     except Exception as e:
         return jsonify({'error': f'상품 상세 조회 중 오류가 발생했습니다: {str(e)}'}), 500
 
+# 댓글 등록 API
+@app.route('/api/comments', methods=['POST'])
+def create_comment():
+    try:
+        # 세션에서 사용자 정보 확인
+        if not session.get('logged_in'):
+            return jsonify({'error': '로그인이 필요합니다.'}), 401
+        
+        data = request.get_json()
+        product_id = data.get('product_id')
+        comment = data.get('comment')
+        
+        if not product_id or not comment:
+            return jsonify({'error': '상품 ID와 댓글 내용이 필요합니다.'}), 400
+        
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'error': '데이터베이스 연결 오류'}), 500
+        
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO COMMENTS (PRODUCT_ID, USER_ID, comment)
+            VALUES (%s, %s, %s)
+        """, (product_id, session.get('user_id'), comment))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({'message': '댓글이 등록되었습니다.'}), 201
+        
+    except Exception as e:
+        return jsonify({'error': f'댓글 등록 중 오류가 발생했습니다: {str(e)}'}), 500
+
+# 댓글 조회 API
+@app.route('/api/comments/<int:product_id>', methods=['GET'])
+def get_comments(product_id):
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'error': '데이터베이스 연결 오류'}), 500
+        
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT c.COMMENT_ID, c.comment, c.created_at, u.nickname as user_nickname
+            FROM COMMENTS c
+            JOIN USER u ON c.USER_ID = u.USER_ID
+            WHERE c.PRODUCT_ID = %s
+            ORDER BY c.created_at DESC
+        """, (product_id,))
+        
+        comments = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        
+        comment_list = []
+        for comment in comments:
+            comment_list.append({
+                'id': comment[0],
+                'comment': comment[1],
+                'created_at': comment[2].isoformat() if comment[2] else None,
+                'user_nickname': comment[3]
+            })
+        
+        return jsonify({'comments': comment_list}), 200
+        
+    except Exception as e:
+        return jsonify({'error': f'댓글 조회 중 오류가 발생했습니다: {str(e)}'}), 500
+
 # 상품 등록 API
 @app.route('/api/products', methods=['POST'])
 def create_product():
@@ -309,6 +385,9 @@ def create_product():
         if 'description' not in request.form or not request.form['description']:
             return jsonify({'error': '상품 설명을 입력해주세요.'}), 400
         
+        if 'category' not in request.form or not request.form['category']:
+            return jsonify({'error': '카테고리를 선택해주세요.'}), 400
+        
         if 'image' not in request.files or not request.files['image'].filename:
             return jsonify({'error': '상품 이미지를 선택해주세요.'}), 400
         
@@ -320,6 +399,7 @@ def create_product():
         price = int(request.form['price'])
         delivery = request.form['delivery']
         description = request.form['description']
+        category = request.form['category']
         seller_id = int(request.form['seller_id'])
         image_file = request.files['image']
         
@@ -350,9 +430,9 @@ def create_product():
         
         # 상품 등록 (이미지를 LONGBLOB으로 저장)
         cursor.execute("""
-            INSERT INTO PRODUCT (SELLER_ID, product_name, price, description, image_url, delivery_method, created_at, is_sold)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-        """, (seller_id, title, price, description, image_data, delivery, datetime.now(), 0))
+            INSERT INTO PRODUCT (SELLER_ID, product_name, price, description, image_url, delivery_method, category, created_at, is_sold)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, (seller_id, title, price, description, image_data, delivery, category, datetime.now(), 0))
         
         product_id = cursor.lastrowid
         conn.commit()
@@ -369,6 +449,55 @@ def create_product():
     except Exception as e:
         return jsonify({'error': f'상품 등록 중 오류가 발생했습니다: {str(e)}'}), 500
 
+
+# 내 상품 목록 조회 API
+@app.route('/api/user/products', methods=['GET'])
+def get_user_products():
+    try:
+        # 세션에서 사용자 정보 확인
+        if not session.get('logged_in'):
+            return jsonify({'error': '로그인이 필요합니다.'}), 401
+        
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'error': '데이터베이스 연결 오류'}), 500
+        
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT PRODUCT_ID, product_name, price, description, image_url, delivery_method, category, created_at, is_sold
+            FROM PRODUCT 
+            WHERE SELLER_ID = %s
+            ORDER BY created_at DESC
+        """, (session.get('user_id'),))
+        
+        products = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        
+        product_list = []
+        for product in products:
+            # 이미지 URL 처리 (LONGBLOB 데이터를 base64로 인코딩)
+            image_url = None
+            if product[4]:  # image_url (LONGBLOB)이 있는 경우
+                image_base64 = base64.b64encode(product[4]).decode('utf-8')
+                image_url = f"data:image/jpeg;base64,{image_base64}"
+            
+            product_list.append({
+                'id': product[0],
+                'title': product[1] if product[1] else '상품명 없음',
+                'price': product[2] if product[2] else 0,
+                'description': product[3] if product[3] else '',
+                'image_url': image_url,
+                'delivery_method': product[5] if product[5] else '배송 정보 없음',
+                'category': product[6] if product[6] else '기타',
+                'created_at': product[7].isoformat() if product[7] else None,
+                'is_sold': bool(product[8])
+            })
+        
+        return jsonify({'products': product_list}), 200
+        
+    except Exception as e:
+        return jsonify({'error': f'내 상품 조회 중 오류가 발생했습니다: {str(e)}'}), 500
 
 # 마이페이지 API (추후 구현)
 @app.route('/api/user/profile', methods=['GET'])

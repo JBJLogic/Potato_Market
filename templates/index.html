@@ -5,9 +5,14 @@
 <section class="latest-products">
     <div class="container">
         <h3>등록된 상품</h3>
-        <div class="product-grid">
+        <div id="productGrid" class="product-grid">
             <!-- 상품들이 여기에 동적으로 로드됩니다 -->
         </div>
     </div>
 </section>
+{% endblock %}
+
+{% block scripts %}
+<!-- 메인 페이지 JavaScript -->
+<script src="{{ url_for('static', filename='js/index.js') }}"></script>
 {% endblock %}

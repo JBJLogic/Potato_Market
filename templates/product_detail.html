@@ -4,12 +4,6 @@
 <!-- 상품 상세 페이지 -->
 <div class="product-detail-container">
     <div class="container">
-        <!-- 뒤로가기 버튼 -->
-        <div class="back-button">
-            <button class="btn btn-outline" onclick="goBack()">
-                ← 뒤로가기
-            </button>
-        </div>
         
         <!-- 상품 상세 정보 -->
         <div class="product-detail" id="productDetail">
@@ -32,5 +26,10 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<!-- 상품 상세 페이지 JavaScript -->
+<script src="{{ url_for('static', filename='js/product_detail.js') }}"></script>
 {% endblock %}
 

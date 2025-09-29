@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- 웹 최적화 마이페이지 -->
+<div class="web-mypage">
+    <div class="web-container">
+        <!-- 좌측 사이드바 -->
+        <aside class="web-sidebar">
+            <div class="sidebar-header">
+                <h2>마이페이지</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#profile" class="nav-item active" data-section="profile">
+                    <i class="fas fa-user"></i>
+                    <span>프로필</span>
+                </a>
+                <a href="#products" class="nav-item" data-section="products">
+                    <i class="fas fa-box"></i>
+                    <span>내 상품</span>
+                </a>
+                <a href="#purchases" class="nav-item" data-section="purchases">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>구매 내역</span>
+                </a>
+            </nav>
+        </aside>
+        
+        <!-- 메인 콘텐츠 영역 -->
+        <main class="web-main">
+            <!-- 프로필 섹션 -->
+            <section id="profile" class="content-section active">
+                <div class="section-header">
+                    <h1>프로필 정보</h1>
+                </div>
+                <div class="profile-boxes">
+                    <!-- 프로필 정보 박스 -->
+                    <div class="info-box">
+                        <div class="box-header">
+                            <i class="fas fa-user"></i>
+                            <h3>사용자 정보</h3>
+                        </div>
+                        <div class="box-content">
+                            <div class="info-item">
+                                <div class="info-label">
+                                    <i class="fas fa-envelope"></i>
+                                    <span>이메일</span>
+                                </div>
+                                <div class="info-value" id="profileEmail">-</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">
+                                    <i class="fas fa-user-tag"></i>
+                                    <span>닉네임</span>
+                                </div>
+                                <div class="info-value" id="profileNickname">-</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">
+                                    <i class="fas fa-wallet"></i>
+                                    <span>보유 금액</span>
+                                </div>
+                                <div class="info-value money" id="profileMoney">-</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 빠른 작업 박스 -->
+                    <div class="action-box">
+                        <div class="box-header">
+                            <i class="fas fa-bolt"></i>
+                            <h3>빠른 작업</h3>
+                        </div>
+                        <div class="box-content">
+                            <button class="quick-action-btn primary" onclick="showProductRegister()">
+                                <div class="btn-icon">
+                                    <i class="fas fa-plus"></i>
+                                </div>
+                                <div class="btn-content">
+                                    <span class="btn-title">상품 등록</span>
+                                    <span class="btn-desc">새로운 상품을 등록하세요</span>
+                                </div>
+                            </button>
+                            <button class="quick-action-btn secondary" onclick="showChargeModal()">
+                                <div class="btn-icon">
+                                    <i class="fas fa-coins"></i>
+                                </div>
+                                <div class="btn-content">
+                                    <span class="btn-title">금액 충전</span>
+                                    <span class="btn-desc">계좌에 금액을 충전하세요</span>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- 내 상품 섹션 -->
+            <section id="products" class="content-section">
+                <div class="section-header">
+                    <h1>내가 등록한 상품</h1>
+                    <div class="header-actions">
+                        <button class="btn btn-primary" onclick="showProductRegister()">
+                            <i class="fas fa-plus"></i>
+                            새 상품 등록
+                        </button>
+                    </div>
+                </div>
+                <div class="products-container">
+                    <div id="myProductsList" class="products-table">
+                        <!-- 상품 목록이 여기에 로드됩니다 -->
+                    </div>
+                </div>
+            </section>
+            
+            <!-- 구매 내역 섹션 -->
+            <section id="purchases" class="content-section">
+                <div class="section-header">
+                    <h1>구매 내역</h1>
+                </div>
+                <div class="empty-state">
+                    <i class="fas fa-shopping-cart"></i>
+                    <h3>구매한 상품이 없습니다</h3>
+                    <p>아직 구매한 상품이 없습니다. 마켓에서 원하는 상품을 찾아보세요!</p>
+                </div>
+            </section>
+        </main>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- 마이페이지 JavaScript -->
+<script src="{{ url_for('static', filename='js/mypage.js') }}"></script>
+{% endblock %}

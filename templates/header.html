@@ -1,0 +1,18 @@
+<div class="container">
+    <div class="logo" onclick="goToHome()" style="cursor: pointer;">
+        <img src="{{ url_for('static', filename='img/potato.png') }}" alt="감자마켓" class="logo-img">
+        <h1>감자마켓</h1>
+    </div>
+    <nav class="nav">
+        <ul>
+            <li><a href="/">홈</a></li>
+            <li><a href="#products">상품</a></li>
+            <li><a href="#board">게시판</a></li>
+            <li><a href="#contact">문의</a></li>
+        </ul>
+    </nav>
+    <div class="auth-buttons">
+        <button class="btn btn-outline" onclick="showLoginModal()">로그인</button>
+        <button class="btn btn-primary" onclick="showRegisterModal()">회원가입</button>
+    </div>
+</div>

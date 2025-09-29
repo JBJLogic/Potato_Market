@@ -8,40 +8,27 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
-    <!-- 헤더 -->
+    <!-- 헤더 영역 -->
     <header class="header">
-        <div class="container">
-            <div class="logo">
-                <img src="{{ url_for('static', filename='img/potato.png') }}" alt="감자마켓" class="logo-img">
-                <h1>감자마켓</h1>
-            </div>
-            <nav class="nav">
-                <ul>
-                    <li><a href="#home">홈</a></li>
-                    <li><a href="#products">상품</a></li>
-                    <li><a href="#board">게시판</a></li>
-                    <li><a href="#contact">문의</a></li>
-                </ul>
-            </nav>
-            <div class="auth-buttons">
-                <button class="btn btn-outline" onclick="showLoginModal()">로그인</button>
-                <button class="btn btn-primary" onclick="showRegisterModal()">회원가입</button>
-            </div>
-        </div>
+        {% include 'header.html' %}
     </header>
 
-    <!-- 메인 콘텐츠 -->
+    <!-- 메인 콘텐츠 영역 -->
     <main class="main">
         {% block content %}{% endblock %}
     </main>
 
-    <!-- 모달들 -->
+    <!-- 전역 모달들 (모든 페이지에서 사용 가능) -->
     {% include 'modals/login.html' %}
     {% include 'modals/register.html' %}
     {% include 'modals/mypage.html' %}
     {% include 'modals/charge.html' %}
     {% include 'modals/product.html' %}
 
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <!-- 전역 JavaScript -->
+    <script src="{{ url_for('static', filename='js/global.js') }}"></script>
+    <!-- 공통 JavaScript -->
+    <script src="{{ url_for('static', filename='js/common.js') }}"></script>
+    {% block scripts %}{% endblock %}
 </body>
 </html>

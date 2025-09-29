@@ -13,6 +13,16 @@
             </div>
             
             <div class="form-group">
+                <label for="productCategory">카테고리</label>
+                <select id="productCategory" name="category" required>
+                    <option value="">카테고리를 선택해주세요</option>
+                    <option value="전자기기">전자기기</option>
+                    <option value="의류">의류</option>
+                    <option value="기타">기타</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
                 <label for="productImage">상품 이미지</label>
                 <input type="file" id="productImage" name="image" accept="image/*" required>
                 <div id="imagePreview" class="image-preview" style="display: none;">
