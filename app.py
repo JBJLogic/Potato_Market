@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, session
 from flask_cors import CORS
 import mysql.connector
 from datetime import datetime
@@ -14,6 +14,7 @@ import boto3
 load_dotenv()
 
 app = Flask(__name__)
+app.secret_key = 'potato_market_secret_key_2024'  # 세션을 위한 시크릿 키
 CORS(app)  # CORS 설정으로 프론트엔드와의 통신 허용
 
 # MySQL 데이터베이스 설정
@@ -130,6 +131,13 @@ def login():
         conn.close()
         
         if user:
+            # 세션에 사용자 정보 저장
+            session['user_id'] = user[0]
+            session['user_email'] = user[1]
+            session['user_nickname'] = user[2]
+            session['user_money'] = user[3]
+            session['logged_in'] = True
+            
             return jsonify({
                 'message': '로그인 성공',
                 'user': {
@@ -145,6 +153,42 @@ def login():
             
     except Exception as e:
         return jsonify({'error': f'로그인 중 오류가 발생했습니다: {str(e)}'}), 500
+
+# 로그아웃 API
+@app.route('/api/logout', methods=['POST'])
+def logout():
+    try:
+        # 세션에서 사용자 정보 제거
+        session.pop('user_id', None)
+        session.pop('user_email', None)
+        session.pop('user_nickname', None)
+        session.pop('user_money', None)
+        session.pop('logged_in', None)
+        
+        return jsonify({'message': '로그아웃 성공'}), 200
+        
+    except Exception as e:
+        return jsonify({'error': f'로그아웃 중 오류가 발생했습니다: {str(e)}'}), 500
+
+# 세션 확인 API
+@app.route('/api/check-session', methods=['GET'])
+def check_session():
+    try:
+        if session.get('logged_in'):
+            return jsonify({
+                'logged_in': True,
+                'user': {
+                    'id': session.get('user_id'),
+                    'email': session.get('user_email'),
+                    'nickname': session.get('user_nickname'),
+                    'money': session.get('user_money')
+                }
+            }), 200
+        else:
+            return jsonify({'logged_in': False}), 200
+            
+    except Exception as e:
+        return jsonify({'error': f'세션 확인 중 오류가 발생했습니다: {str(e)}'}), 500
 
 # 상품 목록 API
 @app.route('/api/products', methods=['GET'])

@@ -3,6 +3,7 @@
 // DOM이 로드된 후 실행
 document.addEventListener('DOMContentLoaded', function() {
     initializeApp();
+    checkSessionStatus();
 });
 
 // 앱 초기화
@@ -41,7 +42,11 @@ function showRegisterModal() {
 
 // 모달 닫기
 function closeModal(modalId) {
-    document.getElementById(modalId).style.display = 'none';
+    const modal = document.getElementById(modalId);
+    modal.classList.remove('show');
+    setTimeout(() => {
+        modal.style.display = 'none';
+    }, 300); // 애니메이션 시간과 맞춤
 }
 
 // 로그인 폼에서 회원가입으로 전환
@@ -191,7 +196,14 @@ function showMyPage() {
         document.getElementById('profileNickname').textContent = window.currentUser.nickname;
         document.getElementById('profileMoney').textContent = window.currentUser.money.toLocaleString() + '원';
     }
-    document.getElementById('myPageModal').style.display = 'block';
+    
+    const modal = document.getElementById('myPageModal');
+    modal.style.display = 'block';
+    
+    // 부드러운 애니메이션을 위해 약간의 지연 후 클래스 추가
+    setTimeout(() => {
+        modal.classList.add('show');
+    }, 10);
 }
 
 // 로그아웃
@@ -236,11 +248,30 @@ function cancelLogout() {
 }
 
 // 로그아웃 확인
-function confirmLogout() {
-    showNotification('로그아웃 되었습니다.', 'success');
-    setTimeout(() => {
-        location.reload();
-    }, 1000);
+async function confirmLogout() {
+    try {
+        const response = await fetch('/api/logout', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (response.ok) {
+            // localStorage에서도 사용자 정보 제거
+            localStorage.removeItem('user');
+            
+            showNotification('로그아웃 되었습니다.', 'success');
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        } else {
+            showNotification('로그아웃 중 오류가 발생했습니다.', 'error');
+        }
+    } catch (error) {
+        console.error('로그아웃 오류:', error);
+        showNotification('로그아웃 중 오류가 발생했습니다.', 'error');
+    }
 }
 
 // 최신 상품 로드
@@ -373,10 +404,7 @@ function displayProductDetail(product) {
         </div>
         <div class="product-detail-actions">
             <button class="btn btn-outline" onclick="showPurchaseModal(${product.id}, '${product.title}', ${product.price})">
-                💰 구매하기
-            </button>
-            <button class="btn btn-primary" onclick="showNotification('관심 상품으로 추가되었습니다!', 'success')">
-                ❤️ 관심상품
+                구매하기
             </button>
         </div>
     `;
@@ -410,9 +438,46 @@ function goBack() {
     window.history.back();
 }
 
+// 세션 상태 확인
+async function checkSessionStatus() {
+    try {
+        const response = await fetch('/api/check-session');
+        if (response.ok) {
+            const result = await response.json();
+            if (result.logged_in) {
+                updateUserInterface(result.user);
+                // localStorage에도 저장 (백업용)
+                localStorage.setItem('user', JSON.stringify(result.user));
+            } else {
+                updateUserInterface(null);
+                localStorage.removeItem('user');
+            }
+        } else {
+            // 세션 확인 실패 시 localStorage 확인
+            checkLoginStatus();
+        }
+    } catch (error) {
+        console.error('세션 확인 오류:', error);
+        // 세션 확인 실패 시 localStorage 확인
+        checkLoginStatus();
+    }
+}
+
+// 로그인 상태 확인 (localStorage 기반 - 백업용)
+function checkLoginStatus() {
+    const userInfo = localStorage.getItem('user');
+    if (userInfo) {
+        const user = JSON.parse(userInfo);
+        updateUserInterface(user);
+    } else {
+        updateUserInterface(null);
+    }
+}
+
 // 페이지 로드 시 상품 상세 정보 로드
 if (window.location.pathname.includes('/product/')) {
     document.addEventListener('DOMContentLoaded', function() {
+        checkSessionStatus();
         loadProductDetail();
     });
 }
@@ -575,14 +640,40 @@ function setChargeAmount(amount) {
 
 // 충전 모달 표시
 function showChargeModal() {
-    document.getElementById('chargeModal').style.display = 'block';
-    closeModal('myPageModal');
+    // 마이페이지 모달을 부드럽게 닫기
+    const myPageModal = document.getElementById('myPageModal');
+    myPageModal.classList.remove('show');
+    
+    setTimeout(() => {
+        myPageModal.style.display = 'none';
+        
+        // 충전 모달을 부드럽게 열기
+        const chargeModal = document.getElementById('chargeModal');
+        chargeModal.style.display = 'block';
+        
+        setTimeout(() => {
+            chargeModal.classList.add('show');
+        }, 10);
+    }, 150); // 애니메이션 시간의 절반
 }
 
 // 상품 등록 모달 표시
 function showProductRegister() {
-    document.getElementById('productModal').style.display = 'block';
-    closeModal('myPageModal');
+    // 마이페이지 모달을 부드럽게 닫기
+    const myPageModal = document.getElementById('myPageModal');
+    myPageModal.classList.remove('show');
+    
+    setTimeout(() => {
+        myPageModal.style.display = 'none';
+        
+        // 상품 등록 모달을 부드럽게 열기
+        const productModal = document.getElementById('productModal');
+        productModal.style.display = 'block';
+        
+        setTimeout(() => {
+            productModal.classList.add('show');
+        }, 10);
+    }, 150); // 애니메이션 시간의 절반
 }
 
 // 충전 처리

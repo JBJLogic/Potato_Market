@@ -388,16 +388,32 @@ body {
     animation: fadeIn 0.3s;
 }
 
+.modal.show {
+    display: block;
+}
+
+/* 모달 전환 애니메이션 */
+.modal-content {
+    transition: all 0.3s ease-in-out;
+}
+
+.modal.show .modal-content {
+    animation: slideIn 0.3s ease-out;
+}
+
 .modal-content {
     background-color: white;
-    margin: 3% auto;
+    margin: auto;
     padding: 2rem;
     border-radius: 10px;
     width: 90%;
     max-width: 400px;
     max-height: 85vh;
     overflow-y: auto;
-    position: relative;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     animation: slideIn 0.3s;
 }
 
@@ -492,6 +508,10 @@ body {
 /* 마이페이지 스타일 */
 .mypage-content {
     max-width: 500px;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 }
 
 .user-profile {
@@ -588,7 +608,18 @@ body {
     max-width: 500px;
     max-height: 80vh;
     overflow-y: auto;
-    margin: 5% auto;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* 모든 모달 컨텐츠 중앙 정렬 */
+.modal-content {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
 }
 
 .image-preview {
@@ -710,11 +741,11 @@ body {
 
 @keyframes slideIn {
     from {
-        transform: translateY(-50px);
+        transform: translate(-50%, -50%) scale(0.8);
         opacity: 0;
     }
     to {
-        transform: translateY(0);
+        transform: translate(-50%, -50%) scale(1);
         opacity: 1;
     }
 }
@@ -960,8 +991,14 @@ body {
     }
     
     .modal-content {
-        margin: 5% auto;
         width: 95%;
         max-height: 90vh;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+    
+    .product-modal-content {
+        max-height: 85vh;
     }
 }
