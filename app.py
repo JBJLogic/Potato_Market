@@ -532,10 +532,13 @@ def charge_money():
         if amount > 1000000:
             return jsonify({'error': '최대 충전 금액은 1,000,000원입니다.'}), 400
         
-        # 사용자 ID 확인 (실제로는 세션에서 가져와야 함)
-        user_id = data.get('user_id')
-        if not user_id:
+        # 세션에서 사용자 정보 확인
+        if not session.get('logged_in'):
             return jsonify({'error': '로그인이 필요합니다.'}), 401
+        
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({'error': '사용자 정보를 찾을 수 없습니다.'}), 401
         
         # 데이터베이스 연결
         conn = get_db_connection()

@@ -502,7 +502,8 @@ async function handleCharge(event) {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ amount: amount })
+            body: JSON.stringify({ amount: amount }),
+            credentials: 'include'  // 쿠키 포함하여 세션 정보 전송
         });
         
         if (response.ok) {
