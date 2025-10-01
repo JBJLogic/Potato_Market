@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- 상품 페이지 -->
+<div class="products-page">
+    <div class="container">
+        <div class="products-layout">
+            <!-- 카테고리 사이드바 -->
+            <aside class="category-sidebar">
+                <div class="sidebar-header">
+                    <h3>카테고리</h3>
+                </div>
+                <nav class="category-nav">
+                    <a href="#" class="category-item active" data-category="all">
+                        <i class="fas fa-th"></i>
+                        <span>전체</span>
+                        <span class="count" id="count-all">0</span>
+                    </a>
+                    <a href="#" class="category-item" data-category="전자기기">
+                        <i class="fas fa-laptop"></i>
+                        <span>전자기기</span>
+                        <span class="count" id="count-전자기기">0</span>
+                    </a>
+                    <a href="#" class="category-item" data-category="의류">
+                        <i class="fas fa-tshirt"></i>
+                        <span>의류</span>
+                        <span class="count" id="count-의류">0</span>
+                    </a>
+                    <a href="#" class="category-item" data-category="기타">
+                        <i class="fas fa-box"></i>
+                        <span>기타</span>
+                        <span class="count" id="count-기타">0</span>
+                    </a>
+                </nav>
+            </aside>
+
+            <!-- 메인 상품 영역 -->
+            <main class="products-main">
+                <!-- 등록된 상품 섹션 -->
+                <section class="latest-products">
+                <div class="products-header">
+                    <h2 id="category-title">등록된 상품</h2>
+                    <div class="products-stats">
+                        <span id="products-count">총 0개 상품</span>
+                    </div>
+                </div>
+                    <div class="products-content">
+                        <div id="productsGrid" class="product-grid">
+                            <!-- 상품들이 여기에 동적으로 로드됩니다 -->
+                        </div>
+                        <!-- 페이징 컨트롤 -->
+                        <div class="pagination-container">
+                            <div class="pagination" id="productsPagination">
+                                <!-- 페이징 버튼들이 여기에 동적으로 로드됩니다 -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 거래완료 상품 섹션 -->
+                <section class="sold-products">
+                    <div class="products-header">
+                        <h2>거래가 완료된 상품</h2>
+                        <div class="products-stats">
+                            <span id="sold-products-count">총 0개 상품</span>
+                        </div>
+                    </div>
+                    <div class="products-content">
+                        <div id="soldProductsGrid" class="product-grid">
+                            <!-- 거래완료 상품들이 여기에 동적으로 로드됩니다 -->
+                        </div>
+                        <!-- 페이징 컨트롤 -->
+                        <div class="pagination-container">
+                            <div class="pagination" id="soldProductsPagination">
+                                <!-- 페이징 버튼들이 여기에 동적으로 로드됩니다 -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- 상품 페이지 JavaScript -->
+<script src="{{ url_for('static', filename='js/products.js') }}"></script>
+{% endblock %}

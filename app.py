@@ -209,7 +209,7 @@ def get_products():
             JOIN USER u ON p.SELLER_ID = u.USER_ID
             WHERE p.is_sold = 0
             ORDER BY p.created_at DESC 
-            LIMIT 20
+            LIMIT 5
         """)
         
         products = cursor.fetchall()
@@ -242,6 +242,111 @@ def get_products():
     except Exception as e:
         return jsonify({'error': f'상품 목록 조회 중 오류가 발생했습니다: {str(e)}'}), 500
 
+# 거래완료 상품 목록 API
+@app.route('/api/sold-products', methods=['GET'])
+def get_sold_products():
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'error': '데이터베이스 연결 오류'}), 500
+        
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT p.PRODUCT_ID, p.product_name, p.price, p.description, p.image_url, p.delivery_method, p.category, p.created_at, p.SELLER_ID, u.nickname
+            FROM PRODUCT p
+            JOIN USER u ON p.SELLER_ID = u.USER_ID
+            WHERE p.is_sold = 1
+            ORDER BY p.created_at DESC 
+            LIMIT 5
+        """)
+        
+        products = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        
+        product_list = []
+        for product in products:
+            image_url = None
+            if product[4]:  # image_url (LONGBLOB)이 있는 경우
+                image_base64 = base64.b64encode(product[4]).decode('utf-8')
+                image_url = f"data:image/jpeg;base64,{image_base64}"
+            
+            product_list.append({
+                'id': product[0],
+                'title': product[1] if product[1] else '상품명 없음',
+                'price': product[2] if product[2] else 0,
+                'description': product[3] if product[3] else '',
+                'image_url': image_url,
+                'delivery_method': product[5] if product[5] else '배송 정보 없음',
+                'category': product[6] if product[6] else '기타',
+                'created_at': product[7].isoformat() if product[7] else None,
+                'seller_id': product[8],
+                'seller_nickname': product[9] if product[9] else '알 수 없음',
+                'is_sold': True
+            })
+        
+        return jsonify({'products': product_list}), 200
+        
+    except Exception as e:
+        return jsonify({'error': f'거래완료 상품 목록 조회 중 오류가 발생했습니다: {str(e)}'}), 500
+
+# 구매한 상품 목록 API
+@app.route('/api/purchased-products', methods=['GET'])
+def get_purchased_products():
+    try:
+        # 세션에서 사용자 정보 확인
+        if not session.get('logged_in'):
+            return jsonify({'error': '로그인이 필요합니다.'}), 401
+        
+        buyer_id = session.get('user_id')
+        if not buyer_id:
+            return jsonify({'error': '사용자 정보를 찾을 수 없습니다.'}), 401
+        
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'error': '데이터베이스 연결 오류'}), 500
+        
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT p.PRODUCT_ID, p.product_name, p.price, p.description, p.image_url, p.delivery_method, p.category, p.created_at, p.SELLER_ID, u.nickname, t.transaction_date
+            FROM PRODUCT p
+            JOIN USER u ON p.SELLER_ID = u.USER_ID
+            JOIN TRANSACTION t ON p.PRODUCT_ID = t.PRODUCT_ID
+            WHERE t.BUYER_ID = %s
+            ORDER BY t.transaction_date DESC 
+            LIMIT 10
+        """, (buyer_id,))
+        
+        products = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        
+        product_list = []
+        for product in products:
+            image_url = None
+            if product[4]:  # image_url (LONGBLOB)이 있는 경우
+                image_base64 = base64.b64encode(product[4]).decode('utf-8')
+                image_url = f"data:image/jpeg;base64,{image_base64}"
+            
+            product_list.append({
+                'id': product[0],
+                'title': product[1] if product[1] else '상품명 없음',
+                'price': product[2] if product[2] else 0,
+                'description': product[3] if product[3] else '',
+                'image_url': image_url,
+                'delivery_method': product[5] if product[5] else '배송 정보 없음',
+                'category': product[6] if product[6] else '기타',
+                'created_at': product[7].isoformat() if product[7] else None,
+                'seller_id': product[8],
+                'seller_nickname': product[9] if product[9] else '알 수 없음',
+                'purchase_date': product[10].isoformat() if product[10] else None
+            })
+        
+        return jsonify({'products': product_list}), 200
+        
+    except Exception as e:
+        return jsonify({'error': f'구매한 상품 조회 중 오류가 발생했습니다: {str(e)}'}), 500
+
 # 상품 상세 정보 API
 @app.route('/api/products/<int:product_id>', methods=['GET'])
 def get_product_detail(product_id):
@@ -252,9 +357,9 @@ def get_product_detail(product_id):
         
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT PRODUCT_ID, product_name, price, description, image_url, delivery_method, created_at, SELLER_ID
+            SELECT PRODUCT_ID, product_name, price, description, image_url, delivery_method, created_at, SELLER_ID, is_sold
             FROM PRODUCT 
-            WHERE PRODUCT_ID = %s AND is_sold = 0
+            WHERE PRODUCT_ID = %s
         """, (product_id,))
         
         product = cursor.fetchone()
@@ -291,7 +396,8 @@ def get_product_detail(product_id):
             'delivery_method': product[5],
             'created_at': product[6].isoformat() if product[6] else None,
             'seller_id': product[7],
-            'seller_nickname': seller_nickname
+            'seller_nickname': seller_nickname,
+            'is_sold': bool(product[8])
         }
         
         return jsonify({'product': product_detail}), 200
@@ -578,6 +684,357 @@ def charge_money():
         return jsonify({'error': '올바른 금액을 입력해주세요.'}), 400
     except Exception as e:
         return jsonify({'error': f'충전 중 오류가 발생했습니다: {str(e)}'}), 500
+
+# 구매 API
+@app.route('/api/purchase', methods=['POST'])
+def purchase_product():
+    try:
+        data = request.get_json()
+        
+        # 필수 필드 검증
+        if not data.get('product_id'):
+            return jsonify({'error': '상품 정보가 필요합니다.'}), 400
+        
+        product_id = int(data['product_id'])
+        
+        # 세션에서 사용자 정보 확인
+        if not session.get('logged_in'):
+            return jsonify({'error': '로그인이 필요합니다.'}), 401
+        
+        buyer_id = session.get('user_id')
+        if not buyer_id:
+            return jsonify({'error': '사용자 정보를 찾을 수 없습니다.'}), 401
+        
+        # 데이터베이스 연결
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'error': '데이터베이스 연결 오류'}), 500
+        
+        cursor = conn.cursor()
+        
+        # 상품 정보 조회
+        cursor.execute("""
+            SELECT PRODUCT_ID, SELLER_ID, product_name, price, is_sold
+            FROM PRODUCT 
+            WHERE PRODUCT_ID = %s
+        """, (product_id,))
+        
+        product = cursor.fetchone()
+        if not product:
+            cursor.close()
+            conn.close()
+            return jsonify({'error': '상품을 찾을 수 없습니다.'}), 404
+        
+        # 이미 판매된 상품인지 확인
+        if product[4]:  # is_sold가 1인 경우
+            cursor.close()
+            conn.close()
+            return jsonify({'error': '이미 판매된 상품입니다.'}), 400
+        
+        # 본인 상품인지 확인
+        if product[1] == buyer_id:  # SELLER_ID와 buyer_id가 같은 경우
+            cursor.close()
+            conn.close()
+            return jsonify({'error': '본인의 상품은 구매할 수 없습니다.'}), 400
+        
+        product_price = product[3]  # price
+        
+        # 구매자 잔액 확인
+        cursor.execute("SELECT money FROM USER WHERE USER_ID = %s", (buyer_id,))
+        buyer = cursor.fetchone()
+        if not buyer:
+            cursor.close()
+            conn.close()
+            return jsonify({'error': '구매자 정보를 찾을 수 없습니다.'}), 404
+        
+        buyer_money = buyer[0]
+        if buyer_money < product_price:
+            cursor.close()
+            conn.close()
+            return jsonify({'error': '금액이 부족합니다.'}), 400
+        
+        # 거래 처리 (트랜잭션)
+        try:
+            # 구매자 잔액 차감
+            new_buyer_money = buyer_money - product_price
+            cursor.execute("UPDATE USER SET money = %s WHERE USER_ID = %s", (new_buyer_money, buyer_id))
+            
+            # 판매자 잔액 증가
+            cursor.execute("SELECT money FROM USER WHERE USER_ID = %s", (product[1],))
+            seller = cursor.fetchone()
+            if seller:
+                seller_money = seller[0]
+                new_seller_money = seller_money + product_price
+                cursor.execute("UPDATE USER SET money = %s WHERE USER_ID = %s", (new_seller_money, product[1]))
+            
+            # 상품 판매 완료 처리
+            cursor.execute("UPDATE PRODUCT SET is_sold = 1 WHERE PRODUCT_ID = %s", (product_id,))
+            
+            # 거래 기록 생성
+            cursor.execute("""
+                INSERT INTO TRANSACTION (PRODUCT_ID, BUYER_ID, transaction_date)
+                VALUES (%s, %s, %s)
+            """, (product_id, buyer_id, datetime.now()))
+            
+            conn.commit()
+            cursor.close()
+            conn.close()
+            
+            return jsonify({
+                'message': '구매가 완료되었습니다.',
+                'product_name': product[2],
+                'price': product_price,
+                'remaining_balance': new_buyer_money
+            }), 200
+            
+        except Exception as e:
+            conn.rollback()
+            cursor.close()
+            conn.close()
+            return jsonify({'error': f'거래 처리 중 오류가 발생했습니다: {str(e)}'}), 500
+        
+    except ValueError:
+        return jsonify({'error': '올바른 상품 정보를 입력해주세요.'}), 400
+    except Exception as e:
+        return jsonify({'error': f'구매 중 오류가 발생했습니다: {str(e)}'}), 500
+     
+##########################S3연동 관련 코드들###########################
+
+@app.route('/s3')
+def s3():
+    return render_template('s3.html')
+
+def s3_connection():
+    try:
+        # s3 클라이언트 생성
+        s3 = boto3.client(
+            service_name="s3",
+            region_name="ap-northeast-2",
+            aws_access_key_id="{액세스 키 ID}",
+            aws_secret_access_key="{비밀 액세스 키}",
+        )
+    except Exception as e:
+        print(e)
+    else:
+        print("s3 bucket connected!") 
+        return s3
+        
+    
+
+@app.route('/api/products/category/<category>', methods=['GET'])
+def get_products_by_category(category):
+    try:
+        # 쿼리 파라미터에서 페이징 정보 추출
+        page = int(request.args.get('page', 1))
+        per_page = int(request.args.get('per_page', 12))
+        offset = (page - 1) * per_page
+
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'error': '데이터베이스 연결 오류'}), 500
+
+        cursor = conn.cursor()
+
+        # 전체 상품 수 조회
+        if category == 'all':
+            cursor.execute("""
+                SELECT COUNT(*) FROM PRODUCT WHERE is_sold = 0
+            """)
+        else:
+            cursor.execute("""
+                SELECT COUNT(*) FROM PRODUCT WHERE category = %s AND is_sold = 0
+            """, (category,))
+        
+        total_count = cursor.fetchone()[0]
+        total_pages = (total_count + per_page - 1) // per_page
+
+        # 상품 조회 (페이징 적용)
+        if category == 'all':
+            cursor.execute("""
+                SELECT p.PRODUCT_ID, p.product_name, p.price, p.image_url, p.delivery_method, p.category, p.created_at, p.is_sold,
+                       u.nickname as seller_nickname
+                FROM PRODUCT p
+                LEFT JOIN USER u ON p.SELLER_ID = u.USER_ID
+                WHERE p.is_sold = 0
+                ORDER BY p.created_at DESC
+                LIMIT %s OFFSET %s
+            """, (per_page, offset))
+        else:
+            cursor.execute("""
+                SELECT p.PRODUCT_ID, p.product_name, p.price, p.image_url, p.delivery_method, p.category, p.created_at, p.is_sold,
+                       u.nickname as seller_nickname
+                FROM PRODUCT p
+                LEFT JOIN USER u ON p.SELLER_ID = u.USER_ID
+                WHERE p.category = %s AND p.is_sold = 0
+                ORDER BY p.created_at DESC
+                LIMIT %s OFFSET %s
+            """, (category, per_page, offset))
+
+        products = cursor.fetchall()
+        cursor.close()
+        conn.close()
+
+        # 상품 정보를 딕셔너리로 변환
+        product_list = []
+        for product in products:
+            # 이미지 데이터 처리 (LONGBLOB -> Base64 또는 None)
+            image_data = product[3]
+            if image_data and isinstance(image_data, bytes):
+                import base64
+                image_url = f"data:image/jpeg;base64,{base64.b64encode(image_data).decode('utf-8')}"
+            else:
+                image_url = None
+                
+            product_dict = {
+                'id': product[0],
+                'title': product[1] if product[1] else '상품명 없음',
+                'price': product[2] if product[2] else 0,
+                'image_url': image_url,
+                'delivery_method': product[4] if product[4] else '배송 정보 없음',
+                'category': product[5] if product[5] else '기타',
+                'created_at': product[6].isoformat() if product[6] else None,
+                'is_sold': bool(product[7]),
+                'seller_nickname': product[8] if product[8] else '판매자 정보 없음'
+            }
+            product_list.append(product_dict)
+
+        return jsonify({
+            'products': product_list,
+            'category': category,
+            'total': total_count,
+            'page': page,
+            'per_page': per_page,
+            'total_pages': total_pages,
+            'has_next': page < total_pages,
+            'has_prev': page > 1
+        }), 200
+
+    except Exception as e:
+        return jsonify({'error': f'카테고리별 상품 조회 중 오류가 발생했습니다: {str(e)}'}), 500
+
+@app.route('/api/products/category-stats', methods=['GET'])
+def get_category_stats():
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'error': '데이터베이스 연결 오류'}), 500
+
+        cursor = conn.cursor()
+
+        # 카테고리별 상품 수 조회 (판매중인 상품만)
+        cursor.execute("""
+            SELECT category, COUNT(*) as count
+            FROM PRODUCT
+            WHERE is_sold = 0
+            GROUP BY category
+        """)
+
+        stats = cursor.fetchall()
+        cursor.close()
+        conn.close()
+
+        # 전체 상품 수 조회
+        total_count = sum(stat[1] for stat in stats)
+
+        # 카테고리별 통계를 딕셔너리로 변환
+        category_stats = {'all': total_count}
+        for stat in stats:
+            category_stats[stat[0]] = stat[1]
+
+        return jsonify({
+            'stats': category_stats
+        }), 200
+
+    except Exception as e:
+        return jsonify({'error': f'카테고리 통계 조회 중 오류가 발생했습니다: {str(e)}'}), 500
+
+@app.route('/api/sold-products/paged', methods=['GET'])
+def get_sold_products_paged():
+    try:
+        # 쿼리 파라미터에서 페이징 정보와 카테고리 추출
+        page = int(request.args.get('page', 1))
+        per_page = int(request.args.get('per_page', 12))
+        category = request.args.get('category', None)
+        offset = (page - 1) * per_page
+
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'error': '데이터베이스 연결 오류'}), 500
+
+        cursor = conn.cursor()
+
+        # 카테고리 필터링 조건 설정
+        category_condition = ""
+        category_params = []
+        if category and category != 'all':
+            category_condition = " AND p.category = %s"
+            category_params.append(category)
+
+        # 거래완료 상품 수 조회
+        count_query = f"""
+            SELECT COUNT(*) FROM PRODUCT p
+            WHERE p.is_sold = 1{category_condition}
+        """
+        cursor.execute(count_query, category_params)
+        total_count = cursor.fetchone()[0]
+        total_pages = (total_count + per_page - 1) // per_page
+
+        # 거래완료 상품 조회 (페이징 적용)
+        query = f"""
+            SELECT p.PRODUCT_ID, p.product_name, p.price, p.image_url, p.delivery_method, p.category, p.created_at, p.is_sold,
+                   u.nickname as seller_nickname
+            FROM PRODUCT p
+            LEFT JOIN USER u ON p.SELLER_ID = u.USER_ID
+            WHERE p.is_sold = 1{category_condition}
+            ORDER BY p.created_at DESC
+            LIMIT %s OFFSET %s
+        """
+        cursor.execute(query, category_params + [per_page, offset])
+
+        products = cursor.fetchall()
+        cursor.close()
+        conn.close()
+
+        # 상품 정보를 딕셔너리로 변환
+        product_list = []
+        for product in products:
+            # 이미지 데이터 처리 (LONGBLOB -> Base64 또는 None)
+            image_data = product[3]
+            if image_data and isinstance(image_data, bytes):
+                import base64
+                image_url = f"data:image/jpeg;base64,{base64.b64encode(image_data).decode('utf-8')}"
+            else:
+                image_url = None
+                
+            product_dict = {
+                'id': product[0],
+                'title': product[1] if product[1] else '상품명 없음',
+                'price': product[2] if product[2] else 0,
+                'image_url': image_url,
+                'delivery_method': product[4] if product[4] else '배송 정보 없음',
+                'category': product[5] if product[5] else '기타',
+                'created_at': product[6].isoformat() if product[6] else None,
+                'is_sold': bool(product[7]),
+                'seller_nickname': product[8] if product[8] else '판매자 정보 없음'
+            }
+            product_list.append(product_dict)
+
+        return jsonify({
+            'products': product_list,
+            'total': total_count,
+            'page': page,
+            'per_page': per_page,
+            'total_pages': total_pages,
+            'has_next': page < total_pages,
+            'has_prev': page > 1
+        }), 200
+
+    except Exception as e:
+        return jsonify({'error': f'거래완료 상품 조회 중 오류가 발생했습니다: {str(e)}'}), 500
+
+@app.route('/products')
+def products():
+    return render_template('products.html')
 
 ###################################################################################
 if __name__ == '__main__':

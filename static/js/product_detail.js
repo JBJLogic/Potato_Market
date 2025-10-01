@@ -55,9 +55,12 @@ function displayProductDetail(product) {
             <div class="product-detail-info">
                 <div class="product-title-row">
                     <h1 class="product-detail-title">${product.title}</h1>
-                    <button class="btn btn-primary purchase-btn" onclick="showPurchaseModal(${product.id}, '${product.title}', ${product.price})">
-                        구매하기
-                    </button>
+                    ${product.is_sold ? 
+                        '<div class="sold-status">거래완료</div>' : 
+                        `<button class="btn btn-primary purchase-btn" onclick="showPurchaseModal(${product.id}, '${product.title}', ${product.price})">
+                            구매하기
+                        </button>`
+                    }
                 </div>
                 <div class="product-detail-price">${product.price.toLocaleString()}원</div>
                 <div class="product-detail-meta">
@@ -95,7 +98,9 @@ function displayProductDetail(product) {
 
 // 구매 모달 표시
 function showPurchaseModal(productId, productTitle, productPrice) {
+    const purchaseModal = document.getElementById('purchaseModal');
     const purchaseInfo = document.getElementById('purchaseInfo');
+    
     if (purchaseInfo) {
         purchaseInfo.innerHTML = `
             <div style="text-align: center; margin-bottom: 1rem;">
@@ -107,13 +112,51 @@ function showPurchaseModal(productId, productTitle, productPrice) {
             </div>
         `;
     }
-    document.getElementById('purchaseModal').style.display = 'block';
+    
+    // 모달에 product_id 저장
+    if (purchaseModal) {
+        purchaseModal.setAttribute('data-product-id', productId);
+    }
+    
+    purchaseModal.style.display = 'block';
 }
 
 // 구매 확인
-function confirmPurchase() {
-    showNotification('구매 기능은 추후 구현될 예정입니다.', 'info');
-    closeModal('purchaseModal');
+async function confirmPurchase() {
+    const purchaseModal = document.getElementById('purchaseModal');
+    const productId = purchaseModal.getAttribute('data-product-id');
+    
+    if (!productId) {
+        showNotification('상품 정보를 찾을 수 없습니다.', 'error');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/purchase', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ product_id: parseInt(productId) }),
+            credentials: 'include'
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            showNotification('거래가 완료되었습니다!', 'success');
+            closeModal('purchaseModal');
+            // 메인화면으로 이동
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 1500);
+        } else {
+            showNotification(result.error, 'error');
+        }
+    } catch (error) {
+        console.error('구매 오류:', error);
+        showNotification('구매 중 오류가 발생했습니다.', 'error');
+    }
 }
 
 

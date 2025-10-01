@@ -120,6 +120,8 @@ function setupTabNavigation() {
             // 섹션별 데이터 로드
             if (sectionId === 'products') {
                 loadMyProducts();
+            } else if (sectionId === 'purchases') {
+                loadPurchasedProducts();
             }
         });
     });
@@ -235,19 +237,97 @@ function displayMyProducts(products) {
     `;
 }
 
-// 구매한 상품 목록 로드 (임시)
-function loadPurchasedProducts() {
-    const purchasedProductsList = document.getElementById('purchasedProductsList');
-    if (purchasedProductsList) {
-        purchasedProductsList.innerHTML = `
-            <div style="text-align: center; padding: 3rem; color: #666;">
-                <i class="fas fa-shopping-cart" style="font-size: 3rem; margin-bottom: 1rem; color: #ddd;"></i>
-                <h3>구매 기능 준비 중</h3>
-                <p>구매 기능은 추후 구현될 예정입니다.</p>
-            </div>
-        `;
+// 구매한 상품 로드
+async function loadPurchasedProducts() {
+    try {
+        const response = await fetch('/api/purchased-products', {
+            credentials: 'include'
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            displayPurchasedProducts(result.products);
+        } else {
+            console.error('구매한 상품 로드 실패');
+            displayPurchasedProducts([]);
+        }
+    } catch (error) {
+        console.error('구매한 상품 로드 오류:', error);
+        displayPurchasedProducts([]);
     }
 }
+
+// 구매한 상품 표시
+function displayPurchasedProducts(products) {
+    const purchasesSection = document.getElementById('purchases');
+    if (!purchasesSection) return;
+    
+    if (!products || products.length === 0) {
+        purchasesSection.innerHTML = `
+            <div class="section-header">
+                <h1>구매 내역</h1>
+            </div>
+            <div class="empty-state">
+                <i class="fas fa-shopping-cart"></i>
+                <h3>구매한 상품이 없습니다</h3>
+                <p>아직 구매한 상품이 없습니다. 마켓에서 원하는 상품을 찾아보세요!</p>
+            </div>
+        `;
+        return;
+    }
+    
+    purchasesSection.innerHTML = `
+        <div class="section-header">
+            <h1>구매 내역</h1>
+        </div>
+        <div class="products-container">
+            <div class="products-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>이미지</th>
+                            <th>상품명</th>
+                            <th>가격</th>
+                            <th>판매자</th>
+                            <th>구매일</th>
+                            <th>관리</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${products.map(product => `
+                            <tr>
+                                <td class="product-image-cell">
+                                    ${product.image_url ? 
+                                        `<img src="${product.image_url}" alt="${product.title}">` : 
+                                        '<div style="width: 60px; height: 60px; background: #f8f9fa; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: #999;">📦</div>'
+                                    }
+                                </td>
+                                <td class="product-title-cell">
+                                    <div class="product-title">${product.title}</div>
+                                </td>
+                                <td class="product-price-cell">
+                                    <div class="product-price">${product.price.toLocaleString()}원</div>
+                                </td>
+                                <td class="product-seller-cell">
+                                    <div class="product-seller">${product.seller_nickname}</div>
+                                </td>
+                                <td class="product-date-cell">
+                                    ${new Date(product.purchase_date).toLocaleDateString('ko-KR')}
+                                </td>
+                                <td class="product-actions-cell">
+                                    <div class="action-buttons">
+                                        <button class="btn btn-outline" onclick="viewProduct(${product.id})">보기</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
+}
+
 
 // 모달 관련 함수들 (기존 global.js에서 가져옴)
 function showProductRegister() {
@@ -388,6 +468,11 @@ function viewProduct(productId) {
 // 상품 수정 (임시)
 function editProduct(productId) {
     showNotification('상품 수정 기능은 추후 구현될 예정입니다.', 'info');
+}
+
+// 상품 상세 페이지로 이동
+function viewProduct(productId) {
+    window.location.href = `/product/${productId}`;
 }
 
 // 뒤로가기
