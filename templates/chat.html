@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- 채팅 페이지 -->
+<div class="chat-container">
+    <div class="chat-wrapper">
+        <!-- 채팅 헤더 -->
+        <div class="chat-header" id="chatHeader">
+            <button class="btn-back" onclick="goBack()">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <div class="chat-header-info" id="chatHeaderInfo">
+                <!-- 상품 정보와 유저 정보가 여기에 표시됩니다 -->
+            </div>
+        </div>
+        
+        <!-- 채팅 메시지 영역 -->
+        <div class="chat-messages" id="chatMessages">
+            <!-- 메시지들이 여기에 표시됩니다 -->
+        </div>
+        
+        <!-- 채팅 입력 영역 -->
+        <div class="chat-input-area">
+            <div class="chat-input-wrapper">
+                <textarea id="chatInput" placeholder="메시지를 입력하세요..." rows="1"></textarea>
+                <button class="btn-send" id="sendBtn" onclick="sendChatMessage()">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Socket.IO 클라이언트 라이브러리 -->
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+<!-- 채팅 JavaScript -->
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+{% endblock %}
+

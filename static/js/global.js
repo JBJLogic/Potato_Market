@@ -31,17 +31,7 @@ function setupGlobalEventListeners() {
         chargeForm.addEventListener('submit', handleCharge);
     }
     
-    // 상품 등록 폼 이벤트
-    const productForm = document.getElementById('productForm');
-    if (productForm) {
-        productForm.addEventListener('submit', handleProductSubmit);
-    }
-    
-    // 이미지 미리보기 이벤트
-    const imageInput = document.getElementById('productImage');
-    if (imageInput) {
-        imageInput.addEventListener('change', handleImagePreview);
-    }
+    // 상품 등록은 별도 페이지에서 처리
     
     // 충전 옵션 버튼 이벤트
     setupChargeOptions();
@@ -125,7 +115,8 @@ async function handleRegister(event) {
     const data = {
         email: formData.get('email'),
         password: formData.get('password'),
-        nickname: formData.get('nickname')
+        nickname: formData.get('nickname'),
+        confirmPassword: formData.get('confirmPassword')
     };
     
     try {
@@ -158,30 +149,54 @@ async function handleRegister(event) {
 function updateUserInterface(user) {
     if (user) {
         window.currentUser = user;
-        const authButtons = document.querySelector('.auth-buttons');
-        if (authButtons) {
-            authButtons.innerHTML = `
-                <div class="user-info">
-                    <span>안녕하세요, ${user.nickname}님!</span>
-                    <button class="btn btn-outline" onclick="showMyPage()">마이페이지</button>
-                    <button class="btn btn-outline" onclick="logout()">로그아웃</button>
-                </div>
-            `;
+        const authButtons = document.getElementById('authButtons');
+        const userButtons = document.getElementById('userButtons');
+        const adminButtons = document.getElementById('adminButtons');
+        
+        // 모든 버튼 그룹 숨기기
+        if (authButtons) authButtons.style.display = 'none';
+        if (userButtons) userButtons.style.display = 'none';
+        if (adminButtons) adminButtons.style.display = 'none';
+        
+        // 사용자 타입에 따라 적절한 버튼 그룹 표시
+        if (user.type === 'manager') {
+            // 관리자 버튼 표시
+            if (adminButtons) {
+                adminButtons.style.display = 'flex';
+                adminButtons.style.gap = '0.5rem';
+            }
+        } else {
+            // 일반 사용자 버튼 표시
+            if (userButtons) {
+                userButtons.style.display = 'flex';
+                userButtons.style.gap = '0.5rem';
+            }
         }
     } else {
         window.currentUser = null;
-        const authButtons = document.querySelector('.auth-buttons');
-        if (authButtons) {
-            authButtons.innerHTML = `
-                <button class="btn btn-outline" onclick="showLoginModal()">로그인</button>
-                <button class="btn btn-primary" onclick="showRegisterModal()">회원가입</button>
-            `;
-        }
+        const authButtons = document.getElementById('authButtons');
+        const userButtons = document.getElementById('userButtons');
+        const adminButtons = document.getElementById('adminButtons');
+        
+        // 로그인 버튼만 표시
+        if (authButtons) authButtons.style.display = 'flex';
+        if (userButtons) userButtons.style.display = 'none';
+        if (adminButtons) adminButtons.style.display = 'none';
     }
 }
 
 // 마이페이지 표시
 function showMyPage() {
+    window.location.href = '/mypage';
+}
+
+// 관리자 페이지로 이동
+function goToAdmin() {
+    window.location.href = '/admin';
+}
+
+// 마이페이지로 이동 (헤더 버튼용)
+function goToMyPage() {
     window.location.href = '/mypage';
 }
 
@@ -302,16 +317,21 @@ async function confirmLogout() {
 // 세션 상태 확인
 async function checkSessionStatus() {
     try {
-        const response = await fetch('/api/check-session');
+        const response = await fetch('/api/check-session', {
+            credentials: 'include'  // 쿠키 포함하여 세션 정보 전송
+        });
         if (response.ok) {
             const result = await response.json();
             if (result.logged_in) {
                 updateUserInterface(result.user);
                 // localStorage에도 저장 (백업용)
                 localStorage.setItem('user', JSON.stringify(result.user));
+                // 전역 변수에도 저장
+                window.currentUser = result.user;
             } else {
                 updateUserInterface(null);
                 localStorage.removeItem('user');
+                window.currentUser = null;
             }
         } else {
             // 세션 확인 실패 시 localStorage 확인
@@ -330,8 +350,10 @@ function checkLoginStatus() {
     if (userInfo) {
         const user = JSON.parse(userInfo);
         updateUserInterface(user);
+        window.currentUser = user;
     } else {
         updateUserInterface(null);
+        window.currentUser = null;
     }
 }
 
@@ -456,23 +478,9 @@ function showChargeModal() {
     }, 150); // 애니메이션 시간의 절반
 }
 
-// 상품 등록 모달 표시
+// 상품 등록 페이지로 이동
 function showProductRegister() {
-    // 마이페이지 모달을 부드럽게 닫기
-    const myPageModal = document.getElementById('myPageModal');
-    myPageModal.classList.remove('show');
-    
-    setTimeout(() => {
-        myPageModal.style.display = 'none';
-        
-        // 상품 등록 모달을 부드럽게 열기
-        const productModal = document.getElementById('productModal');
-        productModal.style.display = 'block';
-        
-        setTimeout(() => {
-            productModal.classList.add('show');
-        }, 10);
-    }, 150); // 애니메이션 시간의 절반
+    window.location.href = '/product/register';
 }
 
 // 충전 처리
@@ -532,72 +540,7 @@ async function handleCharge(event) {
     }
 }
 
-// 상품 등록 처리
-async function handleProductSubmit(event) {
-    event.preventDefault();
-    
-    const formData = new FormData(event.target);
-    const productBtn = document.getElementById('productBtn');
-    const productBtnText = document.getElementById('productBtnText');
-    const productBtnLoading = document.getElementById('productBtnLoading');
-    
-    // 버튼 비활성화 및 로딩 표시
-    productBtn.disabled = true;
-    productBtnText.style.display = 'none';
-    productBtnLoading.style.display = 'inline';
-    
-    try {
-        const response = await fetch('/api/products', {
-            method: 'POST',
-            body: formData,
-            credentials: 'include'  // 쿠키 포함하여 세션 정보 전송
-        });
-        
-        if (response.ok) {
-            const result = await response.json();
-            showSuccess('productError', '상품이 성공적으로 등록되었습니다!');
-            setTimeout(() => {
-                closeModal('productModal');
-                // 폼 초기화
-                document.getElementById('productForm').reset();
-                document.getElementById('imagePreview').style.display = 'none';
-                // 상품 목록 새로고침 (메인 페이지인 경우)
-                if (typeof loadLatestProducts === 'function') {
-                    loadLatestProducts();
-                }
-            }, 1500);
-        } else {
-            const error = await response.json();
-            showError('productError', error.error);
-        }
-    } catch (error) {
-        console.error('상품 등록 오류:', error);
-        showError('productError', '상품 등록 중 오류가 발생했습니다.');
-    } finally {
-        // 버튼 상태 복원
-        productBtn.disabled = false;
-        productBtnText.style.display = 'inline';
-        productBtnLoading.style.display = 'none';
-    }
-}
-
-// 이미지 미리보기 처리
-function handleImagePreview(event) {
-    const file = event.target.files[0];
-    const preview = document.getElementById('imagePreview');
-    const previewImg = document.getElementById('previewImg');
-    
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            previewImg.src = e.target.result;
-            preview.style.display = 'block';
-        };
-        reader.readAsDataURL(file);
-    } else {
-        preview.style.display = 'none';
-    }
-}
+// 상품 등록은 별도 페이지에서 처리
 
 // 메인화면으로 이동
 function goToHome() {

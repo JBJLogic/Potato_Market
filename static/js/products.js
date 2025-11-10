@@ -2,7 +2,7 @@
 let currentCategory = 'all';
 let currentPage = 1;
 let currentSoldPage = 1;
-const perPage = 12;
+const perPage = 5;
 
 // 상품 페이지 초기화
 document.addEventListener('DOMContentLoaded', function() {
@@ -12,20 +12,46 @@ document.addEventListener('DOMContentLoaded', function() {
 // 상품 페이지 초기화
 async function initializeProductsPage() {
     try {
-        // 카테고리 통계 로드
-        await loadCategoryStats();
-        
-        // 등록된 상품 로드
-        await loadProductsByCategory('all', 1);
-        
-        // 거래완료 상품 로드
-        await loadSoldProducts(1);
-        
-        // 카테고리 네비게이션 설정
-        setupCategoryNavigation();
+        const params = new URLSearchParams(window.location.search);
+        const nlQuery = params.get('search');
+
+        if (nlQuery && nlQuery.trim().length > 0) {
+            // 자연어 검색 경로
+            await loadProductsByNL(nlQuery.trim());
+        } else {
+            // 기본 카테고리 뷰 경로
+            await loadCategoryStats();
+            await loadProductsByCategory('all', 1);
+            await loadSoldProducts(1);
+            setupCategoryNavigation();
+        }
         
     } catch (error) {
         console.error('상품 페이지 초기화 오류:', error);
+    }
+}
+
+// 자연어 검색 결과 로드
+async function loadProductsByNL(query) {
+    try {
+        const response = await fetch(`/api/search/nl?q=${encodeURIComponent(query)}`);
+        if (response.ok) {
+            const result = await response.json();
+            displayProducts(result.products);
+            updateProductsHeader('자연어 검색 결과', result.total || 0);
+            // 자연어 모드에서는 거래완료/페이징 영역을 비워줌
+            const soldList = document.getElementById('soldProductsList');
+            if (soldList) soldList.innerHTML = '<tr><td colspan="6" class="empty-state">자연어 검색 모드</td></tr>';
+            const soldPagination = document.getElementById('soldProductsPagination');
+            if (soldPagination) soldPagination.innerHTML = '';
+            const productsPagination = document.getElementById('productsPagination');
+            if (productsPagination) productsPagination.innerHTML = '';
+        } else {
+            displayProducts([]);
+        }
+    } catch (e) {
+        console.error('자연어 검색 로드 오류:', e);
+        displayProducts([]);
     }
 }
 
@@ -128,79 +154,70 @@ async function loadSoldProductsByCategory(category, page = 1) {
     }
 }
 
-// 상품 목록 표시
+// 상품 목록 표시 (테이블 형태)
 function displayProducts(products) {
-    const productsGrid = document.getElementById('productsGrid');
-    if (!productsGrid) {
-        console.error('productsGrid 요소를 찾을 수 없습니다!');
+    const productsList = document.getElementById('productsList');
+    if (!productsList) {
+        console.error('productsList 요소를 찾을 수 없습니다!');
         return;
     }
 
     if (!products || products.length === 0) {
-        productsGrid.classList.add('empty-state');
-        productsGrid.innerHTML = '<div style="color: #666; font-size: 1.2rem;">등록된 상품이 없습니다.</div>';
+        productsList.innerHTML = '<tr><td colspan="6" class="empty-state">등록된 상품이 없습니다</td></tr>';
         return;
     }
-    
-    productsGrid.classList.remove('empty-state');
 
-    productsGrid.innerHTML = products.map(product => {
+    productsList.innerHTML = products.map(product => {
         const productTitle = product.title || '상품명 없음';
         const isSold = product.is_sold || false;
+        const createdDate = new Date(product.created_at).toLocaleDateString('ko-KR');
 
         return `
-            <div class="product-card ${isSold ? 'sold-product' : ''}" onclick="goToProductDetail(${product.id})">
-                <div class="product-image">
-                    ${product.image_url ?
-                        `<img src="${product.image_url}" alt="${productTitle}">` :
-                        '<div style="display: flex; align-items: center; justify-content: center; height: 100%; font-size: 3rem;">📦</div>'
+            <tr class="product-row" onclick="goToProductDetail(${product.id})">
+                <td class="product-title">${productTitle}</td>
+                <td class="product-price">${product.price ? product.price.toLocaleString() : '0'}원</td>
+                <td class="product-category">${product.category || '기타'}</td>
+                <td class="product-delivery">${product.delivery_method || '배송 정보 없음'}</td>
+                <td class="product-date">${createdDate}</td>
+                <td class="product-status">
+                    ${isSold ? 
+                        '<span class="status-sold">거래완료</span>' : 
+                        '<span class="status-available">판매중</span>'
                     }
-                    ${isSold ? '<div class="sold-overlay">거래 완료</div>' : ''}
-                </div>
-                <div class="product-info">
-                    <p class="product-title">${productTitle}</p>
-                    <p class="product-price">${product.price ? product.price.toLocaleString() : '0'}원</p>
-                    <p class="product-location">${product.delivery_method || '배송 정보 없음'}</p>
-                </div>
-            </div>
+                </td>
+            </tr>
         `;
     }).join('');
 }
 
-// 거래완료 상품 표시
+// 거래완료 상품 표시 (테이블 형태)
 function displaySoldProducts(products) {
-    const soldProductsGrid = document.getElementById('soldProductsGrid');
-    if (!soldProductsGrid) {
-        console.error('soldProductsGrid 요소를 찾을 수 없습니다!');
+    const soldProductsList = document.getElementById('soldProductsList');
+    if (!soldProductsList) {
+        console.error('soldProductsList 요소를 찾을 수 없습니다!');
         return;
     }
 
     if (!products || products.length === 0) {
-        soldProductsGrid.classList.add('empty-state');
-        soldProductsGrid.innerHTML = '<div style="color: #666; font-size: 1.2rem;">거래완료된 상품이 없습니다.</div>';
+        soldProductsList.innerHTML = '<tr><td colspan="6" class="empty-state">거래완료된 상품이 없습니다</td></tr>';
         return;
     }
-    
-    soldProductsGrid.classList.remove('empty-state');
 
-    soldProductsGrid.innerHTML = products.map(product => {
+    soldProductsList.innerHTML = products.map(product => {
         const productTitle = product.title || '상품명 없음';
+        const createdDate = new Date(product.created_at).toLocaleDateString('ko-KR');
 
         return `
-            <div class="product-card sold-product" onclick="goToProductDetail(${product.id})">
-                <div class="product-image">
-                    ${product.image_url ?
-                        `<img src="${product.image_url}" alt="${productTitle}">` :
-                        '<div style="display: flex; align-items: center; justify-content: center; height: 100%; font-size: 3rem;">📦</div>'
-                    }
-                    <div class="sold-overlay">거래 완료</div>
-                </div>
-                <div class="product-info">
-                    <p class="product-title">${productTitle}</p>
-                    <p class="product-price">${product.price ? product.price.toLocaleString() : '0'}원</p>
-                    <p class="product-location">${product.delivery_method || '배송 정보 없음'}</p>
-                </div>
-            </div>
+            <tr class="product-row" onclick="goToProductDetail(${product.id})">
+                <td class="product-title">${productTitle}</td>
+                <td class="product-price">${product.price ? product.price.toLocaleString() : '0'}원</td>
+                <td class="product-category">${product.category || '기타'}</td>
+                <td class="product-delivery">${product.delivery_method || '배송 정보 없음'}</td>
+                <td class="product-date">${createdDate}</td>
+                <td class="product-status">
+                    <span class="status-sold">거래완료</span>
+                </td>
+            </tr>
         `;
     }).join('');
 }
@@ -323,6 +340,8 @@ function setupCategoryNavigation() {
         });
     });
 }
+
+// 테이블에서는 높이 조정이 필요하지 않음
 
 // 상품 상세 페이지로 이동
 function goToProductDetail(productId) {

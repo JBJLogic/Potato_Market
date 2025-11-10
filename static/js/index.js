@@ -10,9 +10,56 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // 앱 초기화
 function initializeApp() {
-    loadLatestProducts();
-    loadSoldProducts();
+    setupMainSearchBar();
+    // URL에 search 파라미터가 있으면 자연어 검색 결과 표시
+    const params = new URLSearchParams(window.location.search);
+    const nlQuery = params.get('search');
+    if (nlQuery && nlQuery.trim()) {
+        showSearchResults(nlQuery.trim());
+    }
 }
+
+// 메인 검색바 설정
+function setupMainSearchBar() {
+    const searchInput = document.getElementById('mainSearchInput');
+    const searchBtn = document.querySelector('.main-search-btn');
+    
+    if (searchInput) {
+        // textarea: Ctrl+Enter로 검색, Enter는 줄바꿈 유지
+        searchInput.addEventListener('keydown', function(e) {
+            const isEnter = e.key === 'Enter';
+            const isCtrl = e.ctrlKey || e.metaKey;
+            if (isEnter && isCtrl) {
+                e.preventDefault();
+                performMainSearch();
+            }
+        });
+    }
+    
+    if (searchBtn) {
+        // 검색 버튼 클릭
+        searchBtn.addEventListener('click', performMainSearch);
+    }
+}
+
+// 메인 검색 실행
+function performMainSearch() {
+    const searchTerm = document.getElementById('mainSearchInput').value.trim();
+    
+    if (!searchTerm) {
+        alert('검색어를 입력해주세요.');
+        return;
+    }
+    
+    console.log('검색어:', searchTerm);
+    // 메인에서 바로 자연어 검색 결과 표시
+    const url = new URL(window.location.href);
+    url.searchParams.set('search', searchTerm);
+    window.history.replaceState({}, '', url.toString());
+    showSearchResults(searchTerm);
+}
+
+
 
 // 최신 상품 로드
 async function loadLatestProducts() {
@@ -67,6 +114,28 @@ function displayProducts(products) {
             </div>
         `;
     }).join('');
+}
+
+// 자연어 검색 결과 표시
+async function showSearchResults(query) {
+    const section = document.getElementById('searchResultsSection');
+    const title = document.getElementById('searchResultsTitle');
+    if (section && title) {
+        section.style.display = 'block';
+        title.textContent = `검색 결과: "${query}"`;
+    }
+    try {
+        const res = await fetch(`/api/search/nl?q=${encodeURIComponent(query)}`);
+        if (res.ok) {
+            const data = await res.json();
+            displayProducts(data.products || []);
+        } else {
+            displayProducts([]);
+        }
+    } catch (e) {
+        console.error('자연어 검색 오류:', e);
+        displayProducts([]);
+    }
 }
 
 // 거래완료 상품 로드

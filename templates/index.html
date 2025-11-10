@@ -1,22 +1,32 @@
 {% extends "base.html" %}
 
 {% block content %}
-<!-- 등록된 상품 섹션 -->
-<section class="latest-products">
+<!-- 메인 검색 섹션 -->
+<section class="main-search-section">
     <div class="container">
-        <h3>-등록된 상품-</h3>
-        <div id="productGrid" class="product-grid">
-            <!-- 상품들이 여기에 동적으로 로드됩니다 -->
-        </div>
-    </div>
-</section>
-
-<!-- 거래완료 상품 섹션 -->
-<section class="sold-products">
-    <div class="container">
-        <h3>-거래가 완료된 상품-</h3>
-        <div id="soldProductGrid" class="product-grid">
-            <!-- 거래완료 상품들이 여기에 동적으로 로드됩니다 -->
+        <div class="search-hero">
+            <!-- 브랜드 로고 및 제목 -->
+            <div class="hero-branding">
+                <h1 class="hero-title">감자마켓</h1>
+                <p class="hero-subtitle">안전하고 빠른 중고거래</p>
+            </div>
+            
+            <!-- 메인 검색바 -->
+            <div class="main-search-container">
+                <div class="main-search-bar">
+                    <textarea id="mainSearchInput" class="main-search-input" rows="3" placeholder="문장으로 상품을 검색해보세요 (ex. 겨울에 입을 만한 15만원 이하의 옷 검색해줘)"></textarea>
+                    <button class="main-search-btn" onclick="performMainSearch()">
+                        <i class="fas fa-search"></i>
+                        <span>검색</span>
+                    </button>
+                </div>
+                <!-- 검색 결과 영역 -->
+                <div id="searchResultsSection" style="display:none;">
+                    <h3 id="searchResultsTitle" style="color:#fff; margin: 0 0 1rem 0; font-weight:700;">검색 결과</h3>
+                    <div class="product-grid" id="productGrid"></div>
+                </div>
+            </div>
+            
         </div>
     </div>
 </section>

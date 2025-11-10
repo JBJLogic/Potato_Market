@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="chatbot-page">
+    <div class="container">
+        <div class="page-header">
+            <div class="header-content">
+                <h1>고객센터 챗봇</h1>
+                <p>감자마켓에 대해 궁금한 점을 물어보세요!</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-secondary" onclick="window.history.back()">
+                    <i class="fas fa-arrow-left"></i> 뒤로가기
+                </button>
+            </div>
+        </div>
+
+        <div class="chatbot-container">
+            <div class="chatbot-header">
+                <div class="chatbot-info">
+                    <div class="chatbot-avatar">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div class="chatbot-details">
+                        <h3>감자마켓 고객센터</h3>
+                        <span class="status online">온라인</span>
+                    </div>
+                </div>
+                <div class="chatbot-actions">
+                    <button class="btn btn-sm btn-outline" onclick="clearChat()">
+                        <i class="fas fa-trash"></i> 대화 초기화
+                    </button>
+                </div>
+            </div>
+
+            <div class="chatbot-messages" id="chatbotMessages">
+                <div class="message bot-message">
+                    <div class="message-avatar">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div class="message-content">
+                        <div class="message-text">
+                            안녕하세요! 감자마켓 고객센터 챗봇입니다. 
+                            상품 등록, 구매, 판매, 배송 등에 대해 궁금한 점이 있으시면 언제든지 물어보세요! 😊
+                        </div>
+                        <div class="message-time" id="welcomeTime"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chatbot-input-container">
+                <div class="input-wrapper">
+                    <textarea 
+                        id="chatbotInput" 
+                        placeholder="궁금한 점을 입력해주세요..." 
+                        rows="1"
+                        onkeydown="handleKeyDown(event)"
+                        oninput="autoResize(this)"
+                    ></textarea>
+                    <button class="btn btn-primary send-btn" onclick="sendMessage()" id="sendBtn">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+                <div class="input-footer">
+                    <span class="typing-indicator" id="typingIndicator" style="display: none;">
+                        <i class="fas fa-circle"></i>
+                        <i class="fas fa-circle"></i>
+                        <i class="fas fa-circle"></i>
+                        챗봇이 답변을 준비하고 있습니다...
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/chatbot.js') }}"></script>
+{% endblock %}
+
+

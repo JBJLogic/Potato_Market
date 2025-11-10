@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- 사용자 관리 페이지 -->
+<div class="user-management-page">
+    <div class="container">
+        <!-- 페이지 헤더 -->
+        <div class="page-header">
+            <div class="header-content">
+                <h1>사용자 관리</h1>
+                <p>회원 정보를 조회, 수정, 삭제할 수 있습니다.</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-secondary" onclick="goBack()">
+                    <i class="fas fa-arrow-left"></i> 뒤로가기
+                </button>
+            </div>
+        </div>
+
+        <!-- 검색 및 필터 섹션 -->
+        <div class="search-section">
+            <div class="search-container">
+                <div class="search-box">
+                    <input type="text" id="userSearchInput" placeholder="이메일 또는 닉네임으로 검색..." onkeyup="searchUsers()">
+                    <i class="fas fa-search"></i>
+                </div>
+                <div class="filter-options">
+                    <select id="statusFilter" onchange="filterUsers()">
+                        <option value="all">전체 사용자</option>
+                        <option value="active">활성 사용자</option>
+                        <option value="inactive">비활성 사용자</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- 사용자 목록 섹션 -->
+        <div class="users-section">
+            <div class="section-header">
+                <h2>사용자 목록</h2>
+                <div class="user-stats">
+                    <span id="totalUsers">총 0명</span>
+                    <span id="activeUsers">활성 0명</span>
+                    <span id="inactiveUsers">비활성 0명</span>
+                </div>
+            </div>
+            
+            <div class="users-table-container">
+                <table class="users-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>이메일</th>
+                            <th>닉네임</th>
+                            <th>보유금액</th>
+                            <th>가입일</th>
+                            <th>상태</th>
+                            <th>작업</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody">
+                        <!-- 사용자 목록이 여기에 동적으로 로드됩니다 -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 페이징 -->
+            <div class="pagination-container">
+                <div class="pagination" id="usersPagination">
+                    <!-- 페이징 버튼들이 여기에 동적으로 로드됩니다 -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 사용자 수정 모달 -->
+<div id="userEditModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>사용자 정보 수정</h3>
+            <span class="close" onclick="closeUserEditModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="userEditForm">
+                <input type="hidden" id="editUserId" name="user_id">
+                <div class="form-group">
+                    <label for="editUserEmail">이메일</label>
+                    <input type="email" id="editUserEmail" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="editUserNickname">닉네임</label>
+                    <input type="text" id="editUserNickname" name="nickname" required>
+                </div>
+                <div class="form-group">
+                    <label for="editUserMoney">보유 금액</label>
+                    <input type="number" id="editUserMoney" name="money" min="0" required>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeUserEditModal()">취소</button>
+                    <button type="submit" class="btn btn-primary">수정</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 사용자 삭제 확인 모달 -->
+<div id="userDeleteModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>사용자 삭제 확인</h3>
+            <span class="close" onclick="closeUserDeleteModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <p id="deleteConfirmMessage">정말로 이 사용자를 삭제하시겠습니까?</p>
+            <p class="warning-text">삭제된 사용자는 로그인할 수 없게 됩니다.</p>
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeUserDeleteModal()">취소</button>
+                <button type="button" class="btn btn-danger" onclick="confirmUserDelete()">삭제</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- 사용자 관리 페이지 JavaScript -->
+<script src="{{ url_for('static', filename='js/user_management.js') }}"></script>
+{% endblock %}
+
+

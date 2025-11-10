@@ -44,6 +44,8 @@ function displayProductDetail(product) {
     
     const createdDate = new Date(product.created_at).toLocaleDateString('ko-KR');
     
+    // 관리자 삭제 버튼 제거 - 관리자 상품 관리 페이지에서만 삭제 가능
+    
     productDetail.innerHTML = `
         <div class="product-detail-header">
             <div class="product-detail-image">
@@ -55,12 +57,19 @@ function displayProductDetail(product) {
             <div class="product-detail-info">
                 <div class="product-title-row">
                     <h1 class="product-detail-title">${product.title}</h1>
-                    ${product.is_sold ? 
-                        '<div class="sold-status">거래완료</div>' : 
-                        `<button class="btn btn-primary purchase-btn" onclick="showPurchaseModal(${product.id}, '${product.title}', ${product.price})">
-                            구매하기
-                        </button>`
-                    }
+                    <div class="product-actions">
+                        ${product.is_sold ? 
+                            '<div class="sold-status">거래완료</div>' : 
+                            `<div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                <button class="btn btn-primary purchase-btn" onclick="showPurchaseModal(${product.id}, '${product.title}', ${product.price})">
+                                    구매하기
+                                </button>
+                                <button class="btn btn-outline chat-btn" onclick="startChat(${product.id})">
+                                    <i class="fas fa-comments"></i> 채팅하기
+                                </button>
+                            </div>`
+                        }
+                    </div>
                 </div>
                 <div class="product-detail-price">${product.price.toLocaleString()}원</div>
                 <div class="product-detail-meta">
@@ -236,4 +245,38 @@ function displayComments(comments) {
         </div>
     `).join('');
 }
+
+// 채팅 시작
+async function startChat(productId) {
+    if (!window.currentUser) {
+        showNotification('로그인이 필요합니다.', 'warning');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/chat/room', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ product_id: productId }),
+            credentials: 'include'
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            // 채팅 페이지로 이동
+            window.location.href = `/chat/${result.room_id}`;
+        } else {
+            const error = await response.json();
+            console.error('채팅방 생성 오류:', error);
+            showNotification(error.error || '채팅방을 생성하는 중 오류가 발생했습니다.', 'error');
+        }
+    } catch (error) {
+        console.error('채팅 시작 오류:', error);
+        showNotification('채팅을 시작하는 중 오류가 발생했습니다.', 'error');
+    }
+}
+
+// 관리자 상품 삭제 기능은 관리자 상품 관리 페이지에서만 사용 가능
 

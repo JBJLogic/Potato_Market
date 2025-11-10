@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- 관리자 상품 목록 페이지 -->
+<div class="admin-products-page">
+    <div class="container">
+        <!-- 페이지 헤더 -->
+        <div class="page-header">
+            <div class="header-content">
+                <h1>상품 관리</h1>
+                <p>등록된 상품들을 카테고리별로 조회하고 관리합니다.</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-secondary" onclick="goBack()">
+                    <i class="fas fa-arrow-left"></i> 뒤로가기
+                </button>
+            </div>
+        </div>
+
+        <!-- 카테고리 필터 -->
+        <div class="category-filter">
+            <div class="filter-container">
+                <button class="filter-btn active" data-category="all" onclick="filterByCategory('all')">
+                    전체 상품
+                </button>
+                <button class="filter-btn" data-category="전자기기" onclick="filterByCategory('전자기기')">
+                    전자기기
+                </button>
+                <button class="filter-btn" data-category="의류" onclick="filterByCategory('의류')">
+                    의류
+                </button>
+                <button class="filter-btn" data-category="기타" onclick="filterByCategory('기타')">
+                    기타
+                </button>
+            </div>
+        </div>
+
+        <!-- 상품 통계 -->
+        <div class="products-stats">
+            <div class="stat-item">
+                <span class="stat-label">총 상품 수:</span>
+                <span class="stat-value" id="totalProductsCount">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">현재 카테고리:</span>
+                <span class="stat-value" id="currentCategory">전체</span>
+            </div>
+        </div>
+
+        <!-- 상품 목록 -->
+        <div class="products-section">
+            <div class="section-header">
+                <h2>상품 목록</h2>
+            </div>
+            <div class="products-table-container">
+                <table class="products-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>상품명</th>
+                            <th>카테고리</th>
+                            <th>가격</th>
+                            <th>배송방법</th>
+                            <th>등록일</th>
+                            <th>작업</th>
+                        </tr>
+                    </thead>
+                    <tbody id="productsTableBody">
+                        <!-- 상품 데이터가 여기에 동적으로 로드됩니다 -->
+                    </tbody>
+                </table>
+                <div id="emptyState" class="empty-state" style="display: none;">
+                    <i class="fas fa-box-open"></i>
+                    <p class="empty-message">해당 카테고리에 상품이 없습니다.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 페이징 -->
+        <div class="pagination-container">
+            <div class="pagination" id="productsPagination">
+                <!-- 페이징 버튼들이 여기에 동적으로 로드됩니다 -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/admin_products.js') }}"></script>
+{% endblock %}

@@ -122,6 +122,8 @@ function setupTabNavigation() {
                 loadMyProducts();
             } else if (sectionId === 'purchases') {
                 loadPurchasedProducts();
+            } else if (sectionId === 'chats') {
+                loadChatRooms(1);
             }
         });
     });
@@ -331,7 +333,7 @@ function displayPurchasedProducts(products) {
 
 // 모달 관련 함수들 (기존 global.js에서 가져옴)
 function showProductRegister() {
-    document.getElementById('productModal').style.display = 'block';
+    window.location.href = '/product/register';
 }
 
 function showChargeModal() {
@@ -473,6 +475,137 @@ function editProduct(productId) {
 // 상품 상세 페이지로 이동
 function viewProduct(productId) {
     window.location.href = `/product/${productId}`;
+}
+
+// 채팅방 목록 로드
+let currentChatPage = 1;
+async function loadChatRooms(page = 1) {
+    currentChatPage = page;
+    try {
+        const response = await fetch(`/api/chat/rooms?page=${page}`, {
+            credentials: 'include'
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            displayChatRooms(result.rooms, result.total, result.page, result.total_pages);
+        } else {
+            const error = await response.json();
+            console.error('채팅방 목록 로드 실패:', error.error);
+            document.getElementById('chatsList').innerHTML = '<p style="text-align: center; color: #666;">채팅방을 불러올 수 없습니다.</p>';
+        }
+    } catch (error) {
+        console.error('채팅방 목록 로드 오류:', error);
+        document.getElementById('chatsList').innerHTML = '<p style="text-align: center; color: #666;">채팅방을 불러올 수 없습니다.</p>';
+    }
+}
+
+// 채팅방 목록 표시
+function displayChatRooms(rooms, total, page, totalPages) {
+    const chatsList = document.getElementById('chatsList');
+    const chatsPagination = document.getElementById('chatsPagination');
+    
+    if (!chatsList) return;
+    
+    if (!rooms || rooms.length === 0) {
+        chatsList.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-comments"></i>
+                <h3>진행중인 채팅이 없습니다</h3>
+                <p>상품 상세 페이지에서 채팅을 시작해보세요!</p>
+            </div>
+        `;
+        if (chatsPagination) {
+            chatsPagination.innerHTML = '';
+        }
+        return;
+    }
+    
+    chatsList.innerHTML = rooms.map(room => {
+        const imageUrl = room.image_url ? 
+            (typeof room.image_url === 'string' && room.image_url.startsWith('data:') ? 
+                room.image_url : 
+                `data:image/jpeg;base64,${room.image_url}`) : 
+            null;
+        
+        const lastMessageTime = room.last_message_time ? 
+            new Date(room.last_message_time).toLocaleString('ko-KR', {
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            }) : '';
+        
+        const unreadBadge = room.unread_count > 0 ? 
+            `<span class="unread-badge">${room.unread_count}</span>` : '';
+        
+        return `
+            <div class="chat-room-item" onclick="openChatRoom(${room.ROOM_ID})">
+                <div class="chat-room-image">
+                    ${imageUrl ? 
+                        `<img src="${imageUrl}" alt="${room.product_name}">` : 
+                        '<div class="no-image">📦</div>'
+                    }
+                </div>
+                <div class="chat-room-info">
+                    <div class="chat-room-header">
+                        <div class="chat-room-title">${room.product_name}</div>
+                        <div class="chat-room-time">${lastMessageTime}</div>
+                    </div>
+                    <div class="chat-room-meta">
+                        <div class="chat-room-user">${room.other_user_nickname}</div>
+                        <div class="chat-room-price">${room.price.toLocaleString()}원</div>
+                    </div>
+                    ${room.last_message ? 
+                        `<div class="chat-room-last-message">${escapeHtml(room.last_message)}</div>` : 
+                        '<div class="chat-room-last-message">메시지가 없습니다.</div>'
+                    }
+                </div>
+                ${unreadBadge}
+            </div>
+        `;
+    }).join('');
+    
+    // 페이징 표시
+    if (chatsPagination && totalPages > 1) {
+        let paginationHTML = '<div class="pagination-controls">';
+        
+        // 이전 페이지 버튼
+        if (page > 1) {
+            paginationHTML += `<button class="btn btn-outline" onclick="loadChatRooms(${page - 1})">이전</button>`;
+        }
+        
+        // 페이지 번호
+        const startPage = Math.max(1, page - 2);
+        const endPage = Math.min(totalPages, page + 2);
+        
+        for (let i = startPage; i <= endPage; i++) {
+            paginationHTML += `<button class="btn ${i === page ? 'btn-primary' : 'btn-outline'}" onclick="loadChatRooms(${i})">${i}</button>`;
+        }
+        
+        // 다음 페이지 버튼
+        if (page < totalPages) {
+            paginationHTML += `<button class="btn btn-outline" onclick="loadChatRooms(${page + 1})">다음</button>`;
+        }
+        
+        paginationHTML += '</div>';
+        chatsPagination.innerHTML = paginationHTML;
+    } else if (chatsPagination) {
+        chatsPagination.innerHTML = '';
+    }
+}
+
+// 채팅방 열기
+function openChatRoom(roomId) {
+    window.location.href = `/chat/${roomId}`;
+}
+
+// HTML 이스케이프
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 // 뒤로가기

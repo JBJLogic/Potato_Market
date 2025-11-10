@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- 관리자 대시보드 -->
+<div class="admin-dashboard">
+    <div class="container">
+        <!-- 관리자 헤더 -->
+        <div class="admin-header">
+            <h1>관리자 대시보드</h1>
+            <p>감자마켓 관리자 페이지</p>
+        </div>
+
+        <!-- 통계 카드 -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 id="totalUsers">0</h3>
+                    <p>총 사용자</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-box"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 id="totalProducts">0</h3>
+                    <p>총 상품</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-shopping-cart"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 id="totalTransactions">0</h3>
+                    <p>총 거래</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-comments"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 id="totalPosts">0</h3>
+                    <p>게시글</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 관리 기능 섹션 -->
+        <div class="admin-sections">
+            <div class="admin-section">
+                <h2>사용자 및 게시판 관리</h2>
+                <div class="admin-actions">
+                    <button class="admin-btn" onclick="viewUsers()">
+                        <i class="fas fa-users"></i>
+                        사용자 목록
+                    </button>
+                    <button class="admin-btn" onclick="viewBoard()">
+                        <i class="fas fa-comments"></i>
+                        게시판 관리
+                    </button>
+                </div>
+            </div>
+
+            <div class="admin-section">
+                <h2>상품 관리</h2>
+                <div class="admin-actions">
+                    <button class="admin-btn" onclick="viewProducts()">
+                        <i class="fas fa-box"></i>
+                        상품 목록
+                    </button>
+                    <button class="admin-btn" onclick="viewProductStats()">
+                        <i class="fas fa-chart-line"></i>
+                        상품 통계
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 최근 활동 -->
+        <div class="recent-activity">
+            <h2>최근 활동</h2>
+            <div id="activityList" class="activity-list">
+                <!-- 활동 목록이 여기에 동적으로 로드됩니다 -->
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<!-- 관리자 대시보드 JavaScript -->
+<script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+{% endblock %}

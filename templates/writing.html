@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>게시글 업로드</title>
+
+    <link rel="stylesheet" href="https://uicdn.toast.com/editor/latest/toastui-editor.min.css" />
+</head>
+<body>
+    <h1>게시글 작성</h1>
+
+    <div id="editor"></div>
+
+    <button id="saveButton" style="margin-top: 10px;">저장하기</button>
+
+    <script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js"></script>
+
+    <script>
+        // 1. Toast UI 에디터 인스턴스 생성
+        const editor = new toastui.Editor({
+            el: document.querySelector('#editor'), // 에디터를 적용할 요소
+            height: '600px',                       // 에디터 높이
+            initialEditType: 'wysiwyg',            // 최초 생성시 모드 (wysiwyg | markdown)
+            previewStyle: 'vertical',              // 마크다운 프리뷰 스타일
+            placeholder: '내용을 입력해주세요.',
+
+            // 2. 이미지 업로드를 위한 'hook' 설정
+            hooks: {
+                addImageBlobHook: async (blob, callback) => {
+                    // blob: 사용자가 선택한 이미지 파일 객체
+                    // callback: S3 업로드 성공 후 URL을 에디터에 삽입해주는 함수
+
+                    console.log('이미지 파일 선택됨:', blob);
+
+                    try {
+                        // FormData 객체를 만들어 이미지 파일을 담는다
+                        const formData = new FormData();
+                        formData.append('image', blob);
+
+                        // 서버의 /upload-image 엔드포인트로 POST 요청을 보낸다
+                        const response = await fetch('/upload-image', {
+                            method: 'POST',
+                            body: formData,
+                        });
+
+                        // 서버로부터 JSON 응답을 파싱한다
+                        const data = await response.json();
+
+                        // 응답에 에러가 있으면 콘솔에 출력하고, 없으면 콜백 함수 실행
+                        if (data.error) {
+                            console.error('업로드 실패:', data.error);
+                            alert('이미지 업로드에 실패했습니다.');
+                            return;
+                        }
+
+                        console.log('S3 URL 수신:', data.imageUrl);
+
+                        // callback 함수에 S3로부터 받은 URL과 alt 텍스트를 전달한다
+                        callback(data.imageUrl, '이미지 설명');
+
+                    } catch (error) {
+                        console.error('이미지 업로드 중 예외 발생:', error);
+                        alert('이미지 업로드 중 오류가 발생했습니다.');
+                    }
+                }
+            }
+        });
+
+        // 3. '저장하기' 버튼 클릭 이벤트 처리
+        document.getElementById('saveButton').addEventListener('click', () => {
+            // 에디터의 내용을 HTML로 가져온다. 이 데이터가 DB에 저장될 내용이다.
+            const content = editor.getHTML();
+            console.log('저장할 내용 (HTML):', content);
+            alert('콘솔 창에서 저장될 HTML 내용을 확인하세요.');
+
+            // 실제로는 이 'content' 변수를 서버로 전송하여
+            // 데이터베이스의 게시글 테이블에 저장하는 로직을 구현해야 합니다.
+            /*
+            fetch('/save-post', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: content })
+            });
+            */
+        });
+    </script>
+</body>
+</html>

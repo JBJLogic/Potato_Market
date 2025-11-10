@@ -40,13 +40,24 @@
                 <section class="latest-products">
                 <div class="products-header">
                     <h2 id="category-title">등록된 상품</h2>
-                    <div class="products-stats">
-                        <span id="products-count">총 0개 상품</span>
-                    </div>
                 </div>
                     <div class="products-content">
-                        <div id="productsGrid" class="product-grid">
-                            <!-- 상품들이 여기에 동적으로 로드됩니다 -->
+                        <div class="table-container">
+                            <table class="products-table">
+                                <thead>
+                                    <tr>
+                                        <th>상품명</th>
+                                        <th>가격</th>
+                                        <th>카테고리</th>
+                                        <th>배송방법</th>
+                                        <th>등록일</th>
+                                        <th>상태</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="productsList">
+                                    <!-- 상품들이 여기에 동적으로 로드됩니다 -->
+                                </tbody>
+                            </table>
                         </div>
                         <!-- 페이징 컨트롤 -->
                         <div class="pagination-container">
@@ -61,13 +72,24 @@
                 <section class="sold-products">
                     <div class="products-header">
                         <h2>거래가 완료된 상품</h2>
-                        <div class="products-stats">
-                            <span id="sold-products-count">총 0개 상품</span>
-                        </div>
                     </div>
                     <div class="products-content">
-                        <div id="soldProductsGrid" class="product-grid">
-                            <!-- 거래완료 상품들이 여기에 동적으로 로드됩니다 -->
+                        <div class="table-container">
+                            <table class="products-table">
+                                <thead>
+                                    <tr>
+                                        <th>상품명</th>
+                                        <th>가격</th>
+                                        <th>카테고리</th>
+                                        <th>배송방법</th>
+                                        <th>등록일</th>
+                                        <th>상태</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="soldProductsList">
+                                    <!-- 거래완료 상품들이 여기에 동적으로 로드됩니다 -->
+                                </tbody>
+                            </table>
                         </div>
                         <!-- 페이징 컨트롤 -->
                         <div class="pagination-container">
