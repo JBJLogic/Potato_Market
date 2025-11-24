@@ -61,6 +61,20 @@
                 </div>
                 
                 <div class="form-group">
+                    <label>거래 위치</label>
+                    <div class="address-row">
+                        <input type="text" id="meetingPostcode" name="meeting_zip_code" placeholder="우편번호" readonly required>
+                        <button type="button" class="btn btn-outline" onclick="openAddressSearch()">우편번호 찾기</button>
+                    </div>
+                    <input type="text" id="meetingAddress" name="meeting_address" placeholder="주소" readonly required>
+                    <input type="text" id="meetingDetail" name="meeting_detail" placeholder="상세주소를 입력해주세요" required>
+                    <div class="map-wrapper">
+                        <div id="registerMap"></div>
+                    </div>
+                    <small>주소를 입력하면 지도에 거래 위치가 표시됩니다.</small>
+                </div>
+                
+                <div class="form-group">
                     <label for="productDescription">상품 설명</label>
                     <textarea id="productDescription" name="description" rows="4" placeholder="상품에 대한 자세한 설명을 입력해주세요" required></textarea>
                 </div>
@@ -80,6 +94,8 @@
 
 {% block scripts %}
 <!-- 상품 등록 페이지 JavaScript -->
+<script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+<script src="//dapi.kakao.com/v2/maps/sdk.js?appkey={{ kakao_map_api | default('') }}&libraries=services"></script>
 <script src="{{ url_for('static', filename='js/product_register.js') }}"></script>
 {% endblock %}
 

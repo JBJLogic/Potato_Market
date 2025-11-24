@@ -118,6 +118,46 @@ async function handleRegister(event) {
         nickname: formData.get('nickname'),
         confirmPassword: formData.get('confirmPassword')
     };
+
+    if (!data.password || !data.confirmPassword || data.password !== data.confirmPassword) {
+        showError('registerError', '비밀번호가 일치하지 않습니다.');
+        return;
+    }
+
+    const rawPhone = (formData.get('phone_number') || '').trim();
+    const sex = formData.get('sex');
+    const zipCode = (formData.get('zip_code') || '').trim();
+    const baseAddress = (formData.get('address') || '').trim();
+    const detailAddress = (formData.get('detail_address') || '').trim();
+
+    if (!rawPhone) {
+        showError('registerError', '휴대폰 번호를 입력해주세요.');
+        return;
+    }
+
+    const cleanedPhone = rawPhone.replace(/[^0-9]/g, '');
+    if (!/^\d{11}$/.test(cleanedPhone)) {
+        showError('registerError', '휴대폰 번호는 숫자 11자리(예: 01012345678)여야 합니다.');
+        return;
+    }
+    const formattedPhone = `${cleanedPhone.slice(0, 3)}-${cleanedPhone.slice(3, 7)}-${cleanedPhone.slice(7)}`;
+
+    if (!sex) {
+        showError('registerError', '성별을 선택해주세요.');
+        return;
+    }
+
+    if (!zipCode || !baseAddress) {
+        showError('registerError', '우편번호와 주소를 입력해주세요.');
+        return;
+    }
+
+    const fullAddress = detailAddress ? `${baseAddress} ${detailAddress}`.trim() : baseAddress;
+
+    data.phone_number = formattedPhone;
+    data.sex = sex;
+    data.zip_code = zipCode;
+    data.address = fullAddress;
     
     try {
         const response = await fetch('/api/register', {

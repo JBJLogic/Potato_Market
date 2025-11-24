@@ -2,8 +2,27 @@
 
 // 페이지 로드 시 초기화
 document.addEventListener('DOMContentLoaded', function() {
-    initializeProductRegister();
+    waitForKakaoMaps(initializeProductRegister);
 });
+
+function waitForKakaoMaps(callback, retries = 20) {
+    if (typeof kakao !== 'undefined' && kakao.maps) {
+        if (typeof kakao.maps.load === 'function') {
+            kakao.maps.load(callback);
+        } else {
+            callback();
+        }
+    } else if (retries > 0) {
+        setTimeout(() => waitForKakaoMaps(callback, retries - 1), 200);
+    } else {
+        console.error('Kakao Maps SDK 로드 실패');
+        callback();
+    }
+}
+
+let mapInstance = null;
+let mapMarker = null;
+let mapGeocoder = null;
 
 // 상품 등록 페이지 초기화
 function initializeProductRegister() {
@@ -12,6 +31,12 @@ function initializeProductRegister() {
     
     // 폼 제출 이벤트 설정
     setupFormSubmission();
+    
+    // 지도 초기화
+    initializeMap();
+    
+    // 주소 입력 이벤트 설정
+    setupAddressHandlers();
 }
 
 // 이미지 미리보기 기능 설정
@@ -64,6 +89,17 @@ async function handleProductSubmit(event) {
     // 에러 메시지 숨기기
     if (errorDiv) {
         errorDiv.style.display = 'none';
+    }
+    
+    const meetingZip = formData.get('meeting_zip_code');
+    const meetingAddress = formData.get('meeting_address');
+    
+    if (!meetingZip || !meetingAddress) {
+        showNotification('거래 주소를 입력해주세요.', 'warning');
+        submitBtn.disabled = false;
+        btnText.style.display = 'inline';
+        btnLoading.style.display = 'none';
+        return;
     }
     
     try {
@@ -128,4 +164,86 @@ function goBack() {
     }
 }
 
+// 카카오 지도 초기화
+function initializeMap() {
+    const mapContainer = document.getElementById('registerMap');
+    if (!mapContainer || typeof kakao === 'undefined') {
+        return;
+    }
+    
+    const defaultPosition = new kakao.maps.LatLng(37.5665, 126.9780); // 서울 시청
+    mapInstance = new kakao.maps.Map(mapContainer, {
+        center: defaultPosition,
+        level: 3
+    });
+    
+    mapMarker = new kakao.maps.Marker({
+        position: defaultPosition
+    });
+    mapMarker.setMap(mapInstance);
+    
+    mapGeocoder = new kakao.maps.services.Geocoder();
+}
 
+// 주소 입력 이벤트
+function setupAddressHandlers() {
+    const detailInput = document.getElementById('meetingDetail');
+    if (detailInput) {
+        detailInput.addEventListener('blur', function() {
+            const address = document.getElementById('meetingAddress')?.value || '';
+            updateMapByAddress(address, detailInput.value);
+        });
+    }
+}
+
+// 주소 검색 버튼
+window.openAddressSearch = function() {
+    if (typeof daum === 'undefined' || !daum.Postcode) return;
+    
+    new daum.Postcode({
+        oncomplete: function(data) {
+            let addr = '';
+            
+            if (data.userSelectedType === 'R') {
+                addr = data.roadAddress;
+            } else {
+                addr = data.jibunAddress;
+            }
+            
+            const postcodeInput = document.getElementById('meetingPostcode');
+            const addressInput = document.getElementById('meetingAddress');
+            const detailInput = document.getElementById('meetingDetail');
+            
+            if (postcodeInput) postcodeInput.value = data.zonecode;
+            if (addressInput) addressInput.value = addr;
+            if (detailInput) detailInput.focus();
+            
+            updateMapByAddress(addr, detailInput ? detailInput.value : '');
+        }
+    }).open();
+};
+
+// 주소로 지도 업데이트
+function updateMapByAddress(address, detail) {
+    if (!address || !mapGeocoder) return;
+    
+    const fullAddress = detail ? `${address} ${detail}` : address;
+    mapGeocoder.addressSearch(fullAddress, function(result, status) {
+        if (status === kakao.maps.services.Status.OK) {
+            const lat = parseFloat(result[0].y);
+            const lng = parseFloat(result[0].x);
+            setMapPosition(lat, lng);
+        } else {
+            showNotification('주소로 위치를 찾을 수 없습니다. 상세주소를 확인해주세요.', 'warning');
+        }
+    });
+}
+
+// 지도와 숨김 필드 업데이트
+function setMapPosition(lat, lng) {
+    if (!mapInstance || !mapMarker) return;
+    
+    const coords = new kakao.maps.LatLng(lat, lng);
+    mapInstance.setCenter(coords);
+    mapMarker.setPosition(coords);
+}

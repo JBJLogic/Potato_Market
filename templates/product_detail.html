@@ -1,13 +1,243 @@
 {% extends "base.html" %}
 
 {% block content %}
-<!-- 상품 상세 페이지 -->
+<style>
+    .product-detail-container {
+        padding: 2rem 0 4rem;
+    }
+    .product-detail-wrapper {
+        background: #fff;
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+        padding: 2rem;
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+    }
+    .product-detail-header {
+        display: grid;
+        grid-template-columns: 1fr 1.2fr;
+        gap: 2rem;
+    }
+    .product-detail-image {
+        width: 100%;
+        aspect-ratio: 1/1;
+        border-radius: 16px;
+        overflow: hidden;
+        background: #f7f7f7;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .product-detail-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .product-detail-info {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    .product-title-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    .product-detail-title {
+        font-size: 2rem;
+        font-weight: 700;
+        margin: 0;
+    }
+    .product-detail-price {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: #8B4513;
+    }
+    .product-actions {
+        display: flex;
+        gap: 0.75rem;
+    }
+    .product-detail-meta {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 0.75rem;
+    }
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #555;
+        font-size: 0.95rem;
+    }
+    .product-detail-description,
+    .product-location,
+    .product-comments {
+        background: #fafafa;
+        border-radius: 16px;
+        padding: 1.5rem;
+        width: 100%;
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    .product-detail-description h3,
+    .product-location h3,
+    .product-comments h3 {
+        margin-top: 0;
+        margin-bottom: 1rem;
+        font-size: 1.25rem;
+        font-weight: 700;
+    }
+    .map-wrapper {
+        margin: 1rem auto 0;
+        border-radius: 16px;
+        overflow: hidden;
+        border: 1px solid #eee;
+        width: 100%;
+        max-width: 800px;
+        height: 300px;
+        min-height: 300px;
+        position: relative;
+    }
+    #detailMap {
+        width: 100% !important;
+        height: 100% !important;
+        min-height: 300px;
+        display: block;
+    }
+    .comment-form textarea {
+        width: 100%;
+        border-radius: 12px;
+        border: 1px solid #ddd;
+        padding: 1rem;
+        resize: none;
+        font-size: 1rem;
+        transition: border 0.2s;
+    }
+    .comment-form textarea:focus {
+        outline: none;
+        border-color: #8B4513;
+    }
+    .comment-form button {
+        margin-top: 0.75rem;
+        width: 140px;
+    }
+    .comment-item {
+        background: #fff;
+        border-radius: 12px;
+        padding: 1rem;
+        border: 1px solid #f0f0f0;
+        margin-bottom: 0.75rem;
+    }
+    .comment-header {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.9rem;
+        color: #777;
+        margin-bottom: 0.5rem;
+    }
+    .comment-content {
+        font-size: 1rem;
+        color: #333;
+        white-space: pre-line;
+    }
+    @media (max-width: 992px) {
+        .product-detail-header {
+            grid-template-columns: 1fr;
+        }
+        .product-actions {
+            flex-direction: column;
+        }
+        .product-detail-title {
+            font-size: 1.5rem;
+        }
+        .product-detail-price {
+            font-size: 2rem;
+        }
+    }
+</style>
+
 <div class="product-detail-container">
     <div class="container">
-        
-        <!-- 상품 상세 정보 -->
-        <div class="product-detail" id="productDetail">
-            <!-- 상품 정보가 여기에 동적으로 로드됩니다 -->
+        <div class="product-detail-wrapper">
+            <div class="product-detail-header">
+                <div class="product-detail-image">
+                    {% if product.image_url %}
+                        <img src="{{ product.image_url }}" alt="{{ product.title }}">
+                    {% else %}
+                        <div style="font-size: 4rem;">📦</div>
+                    {% endif %}
+                </div>
+                <div class="product-detail-info">
+                    <div class="product-title-row">
+                        <h1 class="product-detail-title">{{ product.title }}</h1>
+                        <div class="product-actions">
+                            {% if product.is_sold %}
+                                <div class="sold-status">거래완료</div>
+                            {% else %}
+                                <button class="btn btn-primary" onclick="showPurchaseModal()">
+                                    구매하기
+                                </button>
+                                <button class="btn btn-outline chat-btn" onclick="startChat()">
+                                    <i class="fas fa-comments"></i> 채팅하기
+                                </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="product-detail-price">{{ "{:,}".format(product.price) }}원</div>
+                    <div class="product-detail-meta">
+                        <div class="meta-item">
+                            <i class="fas fa-truck"></i>
+                            <span>{{ product.delivery_method or '배송 정보 없음' }}</span>
+                        </div>
+                        <div class="meta-item">
+                            <i class="fas fa-user"></i>
+                            <span>판매자: {{ product.seller_nickname }}</span>
+                        </div>
+                        <div class="meta-item">
+                            <i class="fas fa-calendar"></i>
+                            <span>등록일: {{ product.created_at_display or '-' }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="product-detail-description">
+                <h3>상품 설명</h3>
+                <p>{{ product.description or '상품 설명이 없습니다.' }}</p>
+            </div>
+
+            <div class="product-location">
+                <div class="map-wrapper">
+                    <div id="detailMap"></div>
+                </div>
+            </div>
+
+            <div class="product-comments">
+                <h3>상품 문의</h3>
+                <form id="commentForm" class="comment-form">
+                    <textarea id="commentText" rows="3" placeholder="상품에 대해 궁금한 점을 남겨주세요..." required></textarea>
+                    <div style="text-align: right;">
+                        <button type="submit" class="btn btn-primary">문의하기</button>
+                    </div>
+                </form>
+                <div id="commentsList" class="comments-list" style="margin-top: 1.5rem;">
+                    {% if comments %}
+                        {% for comment in comments %}
+                            <div class="comment-item">
+                                <div class="comment-header">
+                                    <span class="comment-user">{{ comment.user_nickname }}</span>
+                                    <span class="comment-date">{{ comment.created_at_display }}</span>
+                                </div>
+                                <div class="comment-content">{{ comment.comment }}</div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p style="text-align: center; color: #666;">아직 문의가 없습니다.</p>
+                    {% endif %}
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -17,21 +247,284 @@
     <div class="modal-content">
         <span class="close" onclick="closeModal('purchaseModal')">&times;</span>
         <h2>구매하기</h2>
-        <div id="purchaseInfo">
-            <!-- 구매 정보가 여기에 표시됩니다 -->
-        </div>
+        <div id="purchaseInfo"></div>
         <div class="purchase-actions">
             <button class="btn btn-outline" onclick="closeModal('purchaseModal')">취소</button>
             <button class="btn btn-primary" onclick="confirmPurchase()">구매하기</button>
         </div>
     </div>
 </div>
-
-<!-- 관리자 상품 삭제 기능은 관리자 상품 관리 페이지에서만 사용 가능 -->
 {% endblock %}
 
 {% block scripts %}
-<!-- 상품 상세 페이지 JavaScript -->
-<script src="{{ url_for('static', filename='js/product_detail.js') }}"></script>
-{% endblock %}
+<script>
+    window.PRODUCT_DATA = {{ product | tojson }};
+</script>
+<script src="//dapi.kakao.com/v2/maps/sdk.js?appkey={{ kakao_map_api | default('') }}&libraries=services"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeProductDetailPage();
+    });
 
+    function initializeProductDetailPage() {
+        const commentForm = document.getElementById('commentForm');
+        if (commentForm) {
+            commentForm.addEventListener('submit', handleCommentSubmit);
+        }
+        waitForKakaoMaps(setupDetailMap);
+    }
+
+    function waitForKakaoMaps(callback, retries = 20) {
+        if (typeof kakao !== 'undefined' && kakao.maps) {
+            callback();
+        } else if (retries > 0) {
+            setTimeout(() => waitForKakaoMaps(callback, retries - 1), 200);
+        } else {
+            console.error('Kakao Maps SDK 로드 실패');
+        }
+    }
+
+    function setupDetailMap() {
+        const mapContainer = document.getElementById('detailMap');
+        if (!mapContainer || !window.PRODUCT_DATA) {
+            console.error('지도 컨테이너 또는 상품 데이터가 없습니다.');
+            return;
+        }
+
+        const productData = window.PRODUCT_DATA;
+        const baseAddress = productData.meeting_address || '';
+        const detailAddress = productData.meeting_detail || '';
+        const fullAddress = `${baseAddress} ${detailAddress}`.trim();
+
+        if (!fullAddress) {
+            mapContainer.innerHTML = '<p style="padding: 2rem; color: #666; text-align: center; font-size: 1.1rem;">거래 주소가 등록되지 않았습니다.</p>';
+            return;
+        }
+
+        console.log('지도 초기화 시작, 주소:', fullAddress);
+
+        // 지도 컨테이너 크기 확인
+        console.log('지도 컨테이너 크기:', mapContainer.offsetWidth, 'x', mapContainer.offsetHeight);
+        
+        // 지도를 생성합니다
+        const mapOption = {
+            center: new kakao.maps.LatLng(33.450701, 126.570667), // 지도의 중심좌표
+            level: 3 // 지도의 확대 레벨
+        };
+
+        const map = new kakao.maps.Map(mapContainer, mapOption);
+        
+        // 지도 생성 후 relayout 호출
+        setTimeout(function() {
+            map.relayout();
+            console.log('지도 relayout 완료');
+        }, 100);
+
+        // 주소-좌표 변환 객체를 생성합니다
+        const geocoder = new kakao.maps.services.Geocoder();
+
+        // 주소로 좌표를 검색합니다
+        geocoder.addressSearch(fullAddress, function(result, status) {
+            // 정상적으로 검색이 완료됐으면
+            if (status === kakao.maps.services.Status.OK) {
+                const coords = new kakao.maps.LatLng(result[0].y, result[0].x);
+                console.log('검색된 좌표:', coords);
+
+                // 결과값으로 받은 위치를 마커로 표시합니다
+                const marker = new kakao.maps.Marker({
+                    map: map,
+                    position: coords
+                });
+
+                // 인포윈도우로 장소에 대한 설명을 표시합니다
+                const infowindow = new kakao.maps.InfoWindow({
+                    content: `<div style="width:150px;text-align:center;padding:6px 0;">${productData.title || '거래 장소'}</div>`
+                });
+                infowindow.open(map, marker);
+
+                // 지도의 중심을 결과값으로 받은 위치로 이동시킵니다
+                map.setCenter(coords);
+                
+                // 지도 크기 재조정
+                setTimeout(function() {
+                    map.relayout();
+                    console.log('지도 표시 완료, 좌표:', coords);
+                }, 200);
+            } else {
+                console.error('주소 검색 실패:', status);
+                mapContainer.innerHTML = '<p style="padding: 2rem; color: #666; text-align: center; font-size: 1.1rem;">주소를 지도에서 찾을 수 없습니다.</p>';
+            }
+        });
+    }
+
+    function showPurchaseModal() {
+        if (!window.currentUser) {
+            showNotification('로그인이 필요합니다.', 'warning');
+            return;
+        }
+
+        const purchaseModal = document.getElementById('purchaseModal');
+        const purchaseInfo = document.getElementById('purchaseInfo');
+
+        if (purchaseInfo) {
+            purchaseInfo.innerHTML = `
+                <div style="text-align: center; margin-bottom: 1rem;">
+                    <h3>${PRODUCT_DATA.title}</h3>
+                    <div style="font-size: 1.5rem; color: #8B4513; font-weight: bold; margin: 1rem 0;">
+                        ${Number(PRODUCT_DATA.price).toLocaleString()}원
+                    </div>
+                    <p style="color: #666;">구매하시겠습니까?</p>
+                </div>
+            `;
+        }
+
+        purchaseModal.setAttribute('data-product-id', PRODUCT_DATA.id);
+        purchaseModal.style.display = 'block';
+    }
+
+    async function confirmPurchase() {
+        const purchaseModal = document.getElementById('purchaseModal');
+        const productId = purchaseModal.getAttribute('data-product-id');
+
+        if (!productId) {
+            showNotification('상품 정보를 찾을 수 없습니다.', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/purchase', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ product_id: parseInt(productId, 10) }),
+                credentials: 'include'
+            });
+
+            const result = await response.json();
+            if (response.ok) {
+                showNotification('거래가 완료되었습니다!', 'success');
+                closeModal('purchaseModal');
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 1500);
+            } else {
+                showNotification(result.error || '구매 중 오류가 발생했습니다.', 'error');
+            }
+        } catch (error) {
+            console.error('구매 오류:', error);
+            showNotification('구매 중 오류가 발생했습니다.', 'error');
+        }
+    }
+
+    async function handleCommentSubmit(event) {
+        event.preventDefault();
+        const commentText = document.getElementById('commentText');
+        const comment = (commentText.value || '').trim();
+
+        if (!comment) {
+            showNotification('댓글을 입력해주세요.', 'warning');
+            return;
+        }
+
+        if (!window.currentUser) {
+            showNotification('로그인이 필요합니다.', 'warning');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/comments', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    product_id: PRODUCT_DATA.id,
+                    comment
+                })
+            });
+
+            if (response.ok) {
+                showNotification('댓글이 등록되었습니다.', 'success');
+                commentText.value = '';
+                await fetchComments();
+            } else {
+                const error = await response.json();
+                showNotification(error.error || '댓글 등록 실패', 'error');
+            }
+        } catch (error) {
+            console.error('댓글 등록 오류:', error);
+            showNotification('댓글 등록 중 오류가 발생했습니다.', 'error');
+        }
+    }
+
+    async function fetchComments() {
+        try {
+            const response = await fetch(`/api/comments/${PRODUCT_DATA.id}`);
+            if (!response.ok) return;
+            const result = await response.json();
+            renderComments(result.comments || []);
+        } catch (error) {
+            console.error('댓글 불러오기 오류:', error);
+        }
+    }
+
+    function renderComments(comments) {
+        const commentsList = document.getElementById('commentsList');
+        if (!commentsList) return;
+
+        if (!comments.length) {
+            commentsList.innerHTML = '<p style="text-align: center; color: #666;">아직 문의가 없습니다.</p>';
+            return;
+        }
+
+        commentsList.innerHTML = comments.map(comment => `
+            <div class="comment-item">
+                <div class="comment-header">
+                    <span class="comment-user">${comment.user_nickname}</span>
+                    <span class="comment-date">${formatKoreanDate(comment.created_at)}</span>
+                </div>
+                <div class="comment-content">${comment.comment}</div>
+            </div>
+        `).join('');
+    }
+
+    function formatKoreanDate(dateString) {
+        if (!dateString) return '-';
+        const date = new Date(dateString.replace(' ', 'T'));
+        if (isNaN(date.getTime())) return dateString;
+        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ` +
+               `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+    }
+
+    async function startChat() {
+        if (!window.currentUser) {
+            showNotification('로그인이 필요합니다.', 'warning');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/chat/room', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ product_id: PRODUCT_DATA.id }),
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                window.location.href = `/chat/${result.room_id}`;
+            } else {
+                const error = await response.json();
+                showNotification(error.error || '채팅방을 생성하는 중 오류가 발생했습니다.', 'error');
+            }
+        } catch (error) {
+            console.error('채팅 시작 오류:', error);
+            showNotification('채팅을 시작하는 중 오류가 발생했습니다.', 'error');
+        }
+    }
+</script>
+{% endblock %}

@@ -415,10 +415,7 @@ body {
     line-height: 1.2;
 }
 
-.product-location::before {
-    content: '📍';
-    font-size: 0.8rem;
-}
+/* removed location icon */
 
 /* 상품 이미지 호버 효과 */
 .product-image img {
@@ -554,6 +551,11 @@ body {
     left: 50%;
     transform: translate(-50%, -50%);
     animation: slideIn 0.3s;
+}
+
+#registerModal .modal-content {
+    width: 95%;
+    max-width: 640px;
 }
 
 .close {
@@ -1355,6 +1357,45 @@ body {
     white-space: pre-wrap;
     font-size: 1rem;
     margin: 0;
+}
+
+.product-location {
+    background: white;
+    border-radius: 15px;
+    margin: 2rem auto;
+    padding: 2rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    border-left: 4px solid #ff5f6d;
+    max-width: 900px;
+}
+
+.product-location h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 1rem;
+}
+
+.product-location h3::before {
+    content: '📍';
+    font-size: 1.2rem;
+}
+
+.product-location .location-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.product-location .location-info .meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #495057;
 }
 
 .product-detail-actions {
@@ -3558,6 +3599,30 @@ textarea.main-search-input {
     min-height: 120px;
 }
 
+.address-row {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.address-row input {
+    flex: 1;
+}
+
+.map-wrapper {
+    margin-top: 1rem;
+    border: 2px solid #e9ecef;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.03);
+}
+
+#registerMap,
+#detailMap {
+    width: 100%;
+    height: 320px;
+}
+
 .image-preview {
     margin-top: 1rem;
     text-align: center;
@@ -3813,10 +3878,7 @@ textarea.main-search-input {
     line-height: 1.3;
 }
 
-.product-location::before {
-    content: '📍';
-    font-size: 0.7rem;
-}
+/* removed location icon */
 
 /* 페이징 스타일 */
 .pagination-container {

@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template, session
+from flask import Flask, request, jsonify, render_template, session, abort
 from flask_cors import CORS
 from flask_socketio import SocketIO, emit, join_room, leave_room
 import mysql.connector
@@ -6,6 +6,7 @@ from datetime import datetime
 import hashlib
 import os
 import base64
+import re
 from dotenv import load_dotenv
 from openai import OpenAI
 from chatbot_rag import initialize_chatbot, get_chatbot
@@ -51,7 +52,83 @@ def index():
 
 @app.route('/product/<int:product_id>')
 def product_detail(product_id):
-    return render_template('product_detail.html')
+    try:
+        conn = get_db_connection()
+        if not conn:
+            abort(500)
+        
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT p.PRODUCT_ID, p.product_name, p.price, p.description, p.image_url,
+                   p.delivery_method, p.created_at, p.SELLER_ID, p.is_sold,
+                   p.meeting_zip_code, p.meeting_address, p.meeting_detail, u.nickname
+            FROM PRODUCT p
+            JOIN USER u ON p.SELLER_ID = u.USER_ID
+            WHERE p.PRODUCT_ID = %s
+        """, (product_id,))
+        
+        product = cursor.fetchone()
+        if not product:
+            cursor.close()
+            conn.close()
+            abort(404)
+        
+        image_url = None
+        if product[4]:
+            image_base64 = base64.b64encode(product[4]).decode('utf-8')
+            image_url = f"data:image/jpeg;base64,{image_base64}"
+        
+        created_at_display = product[6].strftime('%Y-%m-%d %H:%M') if product[6] else None
+        created_at_iso = product[6].isoformat() if product[6] else None
+        
+        product_detail = {
+            'id': product[0],
+            'title': product[1] if product[1] else '상품명 없음',
+            'price': product[2] if product[2] else 0,
+            'description': product[3] if product[3] else '',
+            'image_url': image_url,
+            'delivery_method': product[5] if product[5] else '배송 정보 없음',
+            'created_at': created_at_iso,
+            'created_at_display': created_at_display,
+            'seller_id': product[7],
+            'seller_nickname': product[12] if product[12] else '알 수 없음',
+            'is_sold': bool(product[8]),
+            'meeting_zip_code': product[9],
+            'meeting_address': product[10],
+            'meeting_detail': product[11]
+        }
+        
+        cursor.execute("""
+            SELECT c.COMMENT_ID, c.comment, c.created_at, u.nickname
+            FROM COMMENTS c
+            JOIN USER u ON c.USER_ID = u.USER_ID
+            WHERE c.PRODUCT_ID = %s
+            ORDER BY c.created_at DESC
+        """, (product_id,))
+        comments = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        
+        comment_list = []
+        for comment in comments:
+            created_at_display = comment[2].strftime('%Y-%m-%d %H:%M') if comment[2] else '-'
+            comment_list.append({
+                'id': comment[0],
+                'comment': comment[1],
+                'created_at': comment[2].isoformat() if comment[2] else None,
+                'created_at_display': created_at_display,
+                'user_nickname': comment[3] if comment[3] else '익명'
+            })
+        
+        return render_template(
+            'product_detail.html',
+            product=product_detail,
+            comments=comment_list,
+            kakao_map_api=os.getenv('kakao_map_api')
+        )
+    except Exception as e:
+        print(f"상품 상세 페이지 렌더링 중 오류: {e}")
+        abort(500)
 
 @app.route('/mypage')
 def mypage():
@@ -66,7 +143,7 @@ def register():
         data = request.get_json()
         
         # 필수 필드 검증
-        required_fields = ['email', 'password', 'nickname', 'confirmPassword']
+        required_fields = ['email', 'password', 'nickname', 'confirmPassword', 'phone_number', 'sex', 'zip_code', 'address']
         for field in required_fields:
             if field not in data or not data[field]:
                 return jsonify({'error': f'{field}은(는) 필수입니다.'}), 400
@@ -93,12 +170,36 @@ def register():
             conn.close()
             return jsonify({'error': '이미 존재하는 닉네임입니다.'}), 400
         
+        # 추가 유효성 검증
+        cleaned_phone = re.sub(r'\D', '', data['phone_number'])
+        if len(cleaned_phone) != 11:
+            return jsonify({'error': '휴대폰 번호는 숫자 11자리여야 합니다.'}), 400
+        formatted_phone = f"{cleaned_phone[:3]}-{cleaned_phone[3:7]}-{cleaned_phone[7:]}"
+        
+        allowed_sex = {'male', 'female', 'other'}
+        if data['sex'] not in allowed_sex:
+            return jsonify({'error': '성별 선택이 올바르지 않습니다.'}), 400
+        
+        full_address = data['address'].strip()
+        if not full_address:
+            return jsonify({'error': '주소가 올바르지 않습니다.'}), 400
+        
         # 사용자 등록
         processed_password = process_password(data['password'])
         cursor.execute("""
-            INSERT INTO USER (email, nickname, password, money, created_at)
-            VALUES (%s, %s, %s, %s, %s)
-        """, (data['email'], data['nickname'], processed_password, 0, datetime.now()))
+            INSERT INTO USER (email, nickname, password, phone_number, zip_code, address, sex, money, created_at)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, (
+            data['email'],
+            data['nickname'],
+            processed_password,
+            formatted_phone,
+            data['zip_code'],
+            full_address,
+            data['sex'],
+            0,
+            datetime.now()
+        ))
         
         conn.commit()
         user_id = cursor.lastrowid
@@ -399,7 +500,8 @@ def get_product_detail(product_id):
         
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT PRODUCT_ID, product_name, price, description, image_url, delivery_method, created_at, SELLER_ID, is_sold
+            SELECT PRODUCT_ID, product_name, price, description, image_url, delivery_method, created_at, SELLER_ID, is_sold,
+                   meeting_zip_code, meeting_address, meeting_detail
             FROM PRODUCT 
             WHERE PRODUCT_ID = %s
         """, (product_id,))
@@ -439,7 +541,10 @@ def get_product_detail(product_id):
             'created_at': product[6].isoformat() if product[6] else None,
             'seller_id': product[7],
             'seller_nickname': seller_nickname,
-            'is_sold': bool(product[8])
+            'is_sold': bool(product[8]),
+            'meeting_zip_code': product[9],
+            'meeting_address': product[10],
+            'meeting_detail': product[11]
         }
         
         return jsonify({'product': product_detail}), 200
@@ -554,6 +659,12 @@ def create_product():
         description = request.form['description']
         category = request.form['category']
         image_file = request.files['image']
+        meeting_zip_code = request.form.get('meeting_zip_code', '').strip()
+        meeting_address = request.form.get('meeting_address', '').strip()
+        meeting_detail = request.form.get('meeting_detail', '').strip()
+        
+        if not meeting_zip_code or not meeting_address:
+            return jsonify({'error': '거래 주소를 입력해주세요.'}), 400
         
         # 가격 유효성 검사
         if price < 0:
@@ -582,9 +693,26 @@ def create_product():
         
         # 상품 등록 (이미지를 LONGBLOB으로 저장)
         cursor.execute("""
-            INSERT INTO PRODUCT (SELLER_ID, product_name, price, description, image_url, delivery_method, category, created_at, is_sold)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-        """, (seller_id, title, price, description, image_data, delivery, category, datetime.now(), 0))
+            INSERT INTO PRODUCT (
+                SELLER_ID, product_name, price, description, image_url,
+                delivery_method, category, meeting_zip_code, meeting_address,
+                meeting_detail, created_at, is_sold
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, (
+            seller_id,
+            title,
+            price,
+            description,
+            image_data,
+            delivery,
+            category,
+            meeting_zip_code,
+            meeting_address,
+            meeting_detail,
+            datetime.now(),
+            0
+        ))
         
         product_id = cursor.lastrowid
         conn.commit()
@@ -1080,7 +1208,7 @@ def product_register():
     # 로그인 확인
     if not session.get('logged_in'):
         return render_template('login.html')
-    return render_template('product_register.html')
+    return render_template('product_register.html', kakao_map_api=os.getenv('kakao_map_api'))
 
 @app.route('/board')
 def board():

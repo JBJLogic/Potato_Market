@@ -16,6 +16,29 @@
                 <input type="text" id="registerNickname" name="nickname" required>
             </div>
             <div class="form-group">
+                <label for="registerPhone">휴대폰 번호</label>
+                <input type="tel" id="registerPhone" name="phone_number" placeholder="010-1234-5678" required>
+                <small>숫자만 입력하거나 000-0000-0000 형식으로 입력해주세요.</small>
+            </div>
+            <div class="form-group">
+                <label for="registerSex">성별</label>
+                <select id="registerSex" name="sex" required>
+                    <option value="">성별 선택</option>
+                    <option value="male">남성</option>
+                    <option value="female">여성</option>
+                    <option value="other">기타</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>주소</label>
+                <div class="address-row">
+                    <input type="text" id="sample6_postcode" name="zip_code" placeholder="우편번호" readonly required>
+                    <button type="button" class="btn btn-outline" onclick="sample6_execDaumPostcode()">우편번호 찾기</button>
+                </div>
+                <input type="text" id="sample6_address" name="address" placeholder="주소" readonly required>
+                <input type="text" id="sample6_detailAddress" name="detail_address" placeholder="상세주소">
+            </div>
+            <div class="form-group">
                 <label for="registerPassword">비밀번호</label>
                 <input type="password" id="registerPassword" name="password" required>
             </div>
@@ -33,3 +56,24 @@
         </form>
     </div>
 </div>
+
+<script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+<script>
+    function sample6_execDaumPostcode() {
+        new daum.Postcode({
+            oncomplete: function(data) {
+                let addr = '';
+
+                if (data.userSelectedType === 'R') {
+                    addr = data.roadAddress;
+                } else {
+                    addr = data.jibunAddress;
+                }
+
+                document.getElementById('sample6_postcode').value = data.zonecode;
+                document.getElementById('sample6_address').value = addr;
+                document.getElementById('sample6_detailAddress').focus();
+            }
+        }).open();
+    }
+</script>
