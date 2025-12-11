@@ -2,42 +2,38 @@
 
 // 페이지 로드 시 초기화
 document.addEventListener('DOMContentLoaded', function() {
-    waitForKakaoMaps(initializeProductRegister);
+    setupImagePreview();
+    setupFormSubmission();
+    setupAddressHandlers();
+    waitForKakaoMaps(initializeMap);
 });
 
 function waitForKakaoMaps(callback, retries = 20) {
-    if (typeof kakao !== 'undefined' && kakao.maps) {
+    const kakaoReady = typeof kakao !== 'undefined' && kakao.maps;
+
+    if (kakaoReady) {
         if (typeof kakao.maps.load === 'function') {
             kakao.maps.load(callback);
         } else {
             callback();
         }
-    } else if (retries > 0) {
-        setTimeout(() => waitForKakaoMaps(callback, retries - 1), 200);
-    } else {
-        console.error('Kakao Maps SDK 로드 실패');
-        callback();
+        return;
     }
+
+    if (retries <= 0) {
+        console.error('Kakao Maps SDK 로드 실패');
+        if (typeof showNotification === 'function') {
+            showNotification('카카오 지도 로드에 실패했습니다. 잠시 후 다시 시도해주세요.', 'error');
+        }
+        return;
+    }
+
+    setTimeout(() => waitForKakaoMaps(callback, retries - 1), 200);
 }
 
 let mapInstance = null;
 let mapMarker = null;
 let mapGeocoder = null;
-
-// 상품 등록 페이지 초기화
-function initializeProductRegister() {
-    // 이미지 미리보기 기능 설정
-    setupImagePreview();
-    
-    // 폼 제출 이벤트 설정
-    setupFormSubmission();
-    
-    // 지도 초기화
-    initializeMap();
-    
-    // 주소 입력 이벤트 설정
-    setupAddressHandlers();
-}
 
 // 이미지 미리보기 기능 설정
 function setupImagePreview() {
@@ -167,7 +163,12 @@ function goBack() {
 // 카카오 지도 초기화
 function initializeMap() {
     const mapContainer = document.getElementById('registerMap');
-    if (!mapContainer || typeof kakao === 'undefined') {
+    if (!mapContainer) {
+        return;
+    }
+
+    if (typeof kakao === 'undefined' || !kakao.maps || !kakao.maps.services || !kakao.maps.LatLng) {
+        console.error('카카오 지도 객체가 준비되지 않았습니다.');
         return;
     }
     
